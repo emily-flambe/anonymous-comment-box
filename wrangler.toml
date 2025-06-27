@@ -2,6 +2,11 @@ name = "anonymous-comment-box"
 main = "src/index.ts"
 compatibility_date = "2024-12-01"
 
+# Custom domain routes
+routes = [
+  "anon.emilycogsdill.com/*"
+]
+
 [env.production]
 vars = { ENVIRONMENT = "production" }
 
