@@ -3,7 +3,7 @@ import { transformMessage } from '../lib/ai-transform';
 import { queueMessage } from '../lib/queue';
 import { SubmitRequest, SubmitResponse, ValidationLimits } from '../types/api';
 import { RateLimiter, RateLimitError } from '../lib/rate-limiter';
-import { PersonaTransformer, AIPersonaTransformerError } from '../lib/ai-persona-transformer';
+import { PersonaTransformer, PersonaTransformationError } from '../lib/ai-persona-transformer';
 
 const rateLimiter = new RateLimiter();
 
@@ -55,7 +55,7 @@ export async function handleSubmission(
     let rateLimitResult;
     
     try {
-      rateLimitResult = await rateLimiter.checkLimit(rateLimitKey, env);
+      rateLimitResult = await rateLimiter.checkLimit(env.MESSAGE_QUEUE, rateLimitKey);
     } catch (error) {
       if (error instanceof RateLimitError) {
         const response: SubmitResponse = {
@@ -91,7 +91,7 @@ export async function handleSubmission(
     } catch (error) {
       console.error('AI transformation failed:', error);
       
-      if (error instanceof AIPersonaTransformerError) {
+      if (error instanceof PersonaTransformationError) {
         return new Response(JSON.stringify({ 
           success: false,
           error: error.message 

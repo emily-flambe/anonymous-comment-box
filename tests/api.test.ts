@@ -12,6 +12,7 @@ describe('API Submission Handler', () => {
         get: vi.fn(),
         put: vi.fn(),
         delete: vi.fn(),
+        getWithMetadata: vi.fn(),
       } as any,
       RATE_LIMITER: {},
       ANTHROPIC_API_KEY: 'test-key',
@@ -41,8 +42,8 @@ describe('API Submission Handler', () => {
     expect((data as any).error).toBe('Message cannot be empty');
   });
 
-  it('should reject message over 5000 characters', async () => {
-    const longMessage = 'a'.repeat(5001);
+  it('should reject message over 2000 characters', async () => {
+    const longMessage = 'a'.repeat(2001);
     const request = new Request('http://localhost/api/submit', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -53,12 +54,16 @@ describe('API Submission Handler', () => {
     const data = await response.json();
 
     expect(response.status).toBe(400);
-    expect((data as any).error).toBe('Message too long (max 5000 characters)');
+    expect((data as any).error).toBe('Message too long (max 2000 characters)');
   });
 
   it('should enforce rate limiting', async () => {
-    // Mock rate limit exceeded
+    // Mock rate limit exceeded - set up for new rate limiter
     mockEnv.MESSAGE_QUEUE.get = vi.fn().mockResolvedValue('10');
+    mockEnv.MESSAGE_QUEUE.getWithMetadata = vi.fn().mockResolvedValue({
+      value: '10',
+      metadata: { resetTime: Date.now() + 30000 }
+    });
 
     const request = new Request('http://localhost/api/submit', {
       method: 'POST',

@@ -51,7 +51,7 @@ export class RateLimiter {
   async checkLimit(key: string, env: Env): Promise<RateLimitResult> {
     // Use KV store as Redis alternative in Cloudflare Workers
     const current = await env.MESSAGE_QUEUE.get(key);
-    const count = current ? parseInt(current) : 0;
+    const count = current ? parseInt(current) || 0 : 0;
     
     if (count >= this.config.maxRequests) {
       // Get TTL info from metadata
@@ -83,7 +83,7 @@ export class RateLimiter {
    */
   async getStatus(key: string, env: Env): Promise<RateLimitResult> {
     const { value, metadata } = await env.MESSAGE_QUEUE.getWithMetadata(key);
-    const count = value ? parseInt(value) : 0;
+    const count = value ? parseInt(value) || 0 : 0;
     const resetTime = (metadata as { resetTime?: number })?.resetTime || Date.now() + this.config.windowMs;
 
     return {
