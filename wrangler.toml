@@ -1,0 +1,41 @@
+name = "anonymous-comment-box"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+
+[env.production]
+vars = { ENVIRONMENT = "production" }
+
+[env.development]
+vars = { ENVIRONMENT = "development" }
+
+# KV Namespaces for message queue
+[[kv_namespaces]]
+binding = "MESSAGE_QUEUE"
+id = "MESSAGE_QUEUE_ID"
+preview_id = "MESSAGE_QUEUE_PREVIEW_ID"
+
+# Durable Objects (if needed for future features)
+# [[durable_objects.bindings]]
+# name = "RATE_LIMITER"
+# class_name = "RateLimiter"
+
+# Environment variables (to be set in Cloudflare dashboard)
+# ANTHROPIC_API_KEY
+# SENDGRID_API_KEY or MAILGUN_API_KEY
+# RECIPIENT_EMAIL
+
+# Rate limiting
+[[unsafe.bindings]]
+name = "RATE_LIMITER"
+type = "ratelimit"
+namespace_id = "1"
+
+# Simple rate limiting: 10 requests per IP per hour
+simple = { limit = 10, period = 3600 }
+
+[build]
+command = "npm run typecheck"
+
+[dev]
+port = 8787
+local_protocol = "http"

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anonymous Feedback</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Send Anonymous Feedback</h1>
+            <p class="subtitle">Your message will be transformed and delivered with complete anonymity</p>
+        </header>
+
+        <main>
+            <form id="feedbackForm" class="feedback-form">
+                <div class="form-group">
+                    <label for="message">Your Message</label>
+                    <textarea 
+                        id="message" 
+                        name="message" 
+                        rows="6" 
+                        maxlength="5000"
+                        placeholder="Share your thoughts, feedback, or concerns..."
+                        required
+                    ></textarea>
+                    <div class="char-count">
+                        <span id="charCount">0</span> / 5000 characters
+                    </div>
+                </div>
+
+                <div class="privacy-notice">
+                    <h3>Your Privacy is Protected</h3>
+                    <ul>
+                        <li>Messages are transformed by AI to mask writing style</li>
+                        <li>Delivered after a random 1-6 hour delay</li>
+                        <li>No tracking or identifying information collected</li>
+                        <li>Completely anonymous - even we can't trace it back</li>
+                    </ul>
+                </div>
+
+                <button type="submit" class="submit-btn" id="submitBtn">
+                    Send Anonymous Feedback
+                </button>
+            </form>
+
+            <div id="successMessage" class="success-message hidden">
+                <h2>Message Sent!</h2>
+                <p>Your feedback has been queued for anonymous delivery.</p>
+                <button onclick="resetForm()" class="reset-btn">Send Another Message</button>
+            </div>
+
+            <div id="errorMessage" class="error-message hidden">
+                <h2>Something went wrong</h2>
+                <p id="errorText">Please try again later.</p>
+                <button onclick="resetForm()" class="reset-btn">Try Again</button>
+            </div>
+        </main>
+
+        <footer>
+            <p>Built with privacy in mind. <a href="https://github.com/yourusername/anonymous-comment-box" target="_blank">View Source</a></p>
+        </footer>
+    </div>
+
+    <script src="/script.js"></script>
+</body>
+</html>
