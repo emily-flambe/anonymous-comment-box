@@ -38,16 +38,15 @@ const personas = [
 ];
 
 export async function transformMessage(originalMessage: string, env: Env): Promise<string> {
-  try {
-    // Select random persona
-    const persona = personas[Math.floor(Math.random() * personas.length)];
-    
-    // Initialize Anthropic client
-    const anthropic = new Anthropic({
-      apiKey: env.ANTHROPIC_API_KEY,
-    });
+  // Select random persona
+  const persona = personas[Math.floor(Math.random() * personas.length)];
+  
+  // Initialize Anthropic client
+  const anthropic = new Anthropic({
+    apiKey: env.ANTHROPIC_API_KEY,
+  });
 
-    const prompt = `You are a message transformation assistant. Your task is to rewrite the following message in a different style to preserve anonymity while maintaining the core meaning and intent.
+  const prompt = `You are a message transformation assistant. Your task is to rewrite the following message in a different style to preserve anonymity while maintaining the core meaning and intent.
 
 Persona: ${persona.name}
 Style: ${persona.style}
@@ -64,27 +63,21 @@ Original message:
 
 Rewrite the message in the specified style:`;
 
-    const response = await anthropic.messages.create({
-      model: 'claude-3-haiku-20240307',
-      max_tokens: 1000,
-      temperature: 0.7,
-      messages: [
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ],
-    });
+  const response = await anthropic.messages.create({
+    model: 'claude-3-haiku-20240307',
+    max_tokens: 1000,
+    temperature: 0.7,
+    messages: [
+      {
+        role: 'user',
+        content: prompt,
+      },
+    ],
+  });
 
-    const transformedMessage = response.content[0].type === 'text' 
-      ? response.content[0].text.trim()
-      : originalMessage; // Fallback to original if transformation fails
-
-    return transformedMessage;
-    
-  } catch (error) {
-    console.error('AI transformation error:', error);
-    // Return original message if transformation fails
-    return originalMessage;
+  if (response.content[0].type !== 'text' || !response.content[0].text.trim()) {
+    throw new Error('AI transformation returned empty or invalid response');
   }
+
+  return response.content[0].text.trim();
 }
