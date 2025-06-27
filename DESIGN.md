@@ -177,13 +177,18 @@ GET /health (Optional)
 - **Error Handling:** Graceful degradation to pattern-based transformation
 
 #### 3.2 Email Service Provider
-- **Primary Option:** SendGrid SMTP API
-- **Alternative Options:** Mailgun, AWS SES, Resend
+- **Primary Option:** ZeptoMail by Zoho REST API
+- **Alternative Options:** Brevo, Resend, Mailgun
 - **Configuration Requirements:**
-  - API key authentication
+  - API key authentication (Zoho-enczapikey format)
   - From address: noreply@[domain]
   - Reply-to: emily.cogsdill@gmail.com
-  - Template support for consistent formatting
+  - JSON payload structure for API calls
+- **Free Tier Benefits:**
+  - 10,000 emails included as one-time credit
+  - 24/7 email and phone support
+  - High deliverability rates
+  - Developer-friendly REST API
 
 ### 4. Security Requirements
 
@@ -342,9 +347,74 @@ async function processQueue(env) {
 }
 ```
 
-### 4. Email Template Design
+### 4. ZeptoMail API Integration
 
-#### 4.1 Email Structure
+#### 4.1 API Implementation
+```javascript
+async function sendEmailBatch(batch, env) {
+  const emailBody = formatBatchEmail(batch);
+  
+  const payload = {
+    from: {
+      address: env.EMAIL_FROM,
+      name: "Anonymous Feedback System"
+    },
+    to: [{
+      email_address: {
+        address: env.EMAIL_TO,
+        name: "Emily Cogsdill"
+      }
+    }],
+    subject: `Anonymous Feedback Batch (${batch.length} messages)`,
+    textbody: emailBody,
+    track_clicks: false,
+    track_opens: false
+  };
+
+  const response = await fetch('https://api.zeptomail.com/v1.1/email', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Zoho-enczapikey ${env.ZEPTOMAIL_API_KEY}`,
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    },
+    body: JSON.stringify(payload)
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(`ZeptoMail API error: ${error.message}`);
+  }
+
+  return await response.json();
+}
+```
+
+#### 4.2 Error Handling & Retry Logic
+```javascript
+async function sendWithRetry(batch, env) {
+  const maxRetries = 3;
+  const baseDelay = 1000; // 1 second
+  
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return await sendEmailBatch(batch, env);
+    } catch (error) {
+      if (attempt === maxRetries) {
+        console.error('Final retry failed:', error.message);
+        throw error;
+      }
+      
+      const delay = baseDelay * Math.pow(2, attempt - 1);
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+}
+```
+
+### 5. Email Template Design
+
+#### 5.1 Email Structure
 ```
 Subject: Anonymous Feedback Batch (X messages)
 
@@ -374,8 +444,8 @@ To stop receiving these emails, reply with "UNSUBSCRIBE"
 ```javascript
 // Required Environment Variables
 const CONFIG = {
-  // Email Configuration
-  EMAIL_API_KEY: env.EMAIL_API_KEY,
+  // ZeptoMail Configuration
+  ZEPTOMAIL_API_KEY: env.ZEPTOMAIL_API_KEY,
   EMAIL_FROM: env.EMAIL_FROM || "noreply@anonymous-feedback.workers.dev",
   EMAIL_TO: "emily.cogsdill@gmail.com",
   
@@ -442,7 +512,7 @@ BATCH_SIZE_LIMIT = "50"
 #### 1.2 Secrets Configuration
 ```bash
 # Set via Wrangler CLI
-wrangler secret put EMAIL_API_KEY
+wrangler secret put ZEPTOMAIL_API_KEY
 wrangler secret put CLAUDE_API_KEY
 ```
 
