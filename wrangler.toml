@@ -35,11 +35,11 @@ name = "RATE_LIMITER"
 type = "ratelimit"
 namespace_id = "1"
 
-# Simple rate limiting: 10 requests per IP per hour
-simple = { limit = 10, period = 3600 }
+# Simple rate limiting: 10 requests per IP per minute
+simple = { limit = 10, period = 60 }
 
-[build]
-command = "npm run typecheck"
+# [build]
+# command = "npm run typecheck:src"
 
 [dev]
 port = 8787
