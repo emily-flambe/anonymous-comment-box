@@ -5,12 +5,13 @@
   "main": "src/index.ts",
   "type": "module",
   "scripts": {
-    "dev": "wrangler dev",
+    "dev": "wrangler dev --no-bundle",
     "deploy": "wrangler deploy",
     "test": "vitest",
     "test:watch": "vitest watch",
     "lint": "eslint src --ext .ts,.tsx",
     "typecheck": "tsc --noEmit",
+    "typecheck:src": "tsc --noEmit src/index.ts",
     "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,css}\""
   },
   "keywords": [
