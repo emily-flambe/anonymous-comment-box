@@ -177,18 +177,19 @@ GET /health (Optional)
 - **Error Handling:** Graceful degradation to pattern-based transformation
 
 #### 3.2 Email Service Provider
-- **Primary Option:** ZeptoMail by Zoho REST API
-- **Alternative Options:** Brevo, Resend, Mailgun
+- **Primary Option:** Gmail API via Google Cloud Platform
+- **Alternative Options:** Resend, Mailgun, Brevo
 - **Configuration Requirements:**
-  - API key authentication (Zoho-enczapikey format)
-  - From address: noreply@[domain]
-  - Reply-to: emily.cogsdill@gmail.com
-  - JSON payload structure for API calls
-- **Free Tier Benefits:**
-  - 10,000 emails included as one-time credit
-  - 24/7 email and phone support
-  - High deliverability rates
-  - Developer-friendly REST API
+  - OAuth 2.0 authentication with Gmail scope
+  - Google Cloud Project with Gmail API enabled
+  - Service account or user OAuth token
+  - HTTPS API calls only (no SMTP needed)
+- **Benefits:**
+  - Completely free for personal use
+  - No domain verification required
+  - No email templates needed
+  - Direct integration with Gmail account
+  - High deliverability and reliability
 
 ### 4. Security Requirements
 
@@ -347,43 +348,92 @@ async function processQueue(env) {
 }
 ```
 
-### 4. ZeptoMail API Integration
+### 4. Gmail API Integration
 
-#### 4.1 API Implementation
+#### 4.1 Email Content Generation
+```javascript
+function formatEmailContent(batch) {
+  const subject = `Anonymous Feedback Batch (${batch.length} messages)`;
+  
+  const htmlContent = `
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <h2 style="color: #495057; text-align: center;">🔒 Anonymous Feedback</h2>
+      <p style="text-align: center; background: #f8f9fa; padding: 15px; border-radius: 6px;">
+        You have received <strong>${batch.length}</strong> anonymous feedback message(s)
+      </p>
+      
+      ${batch.map((msg, index) => `
+        <div style="margin: 20px 0; padding: 20px; border-left: 4px solid #6f42c1; background: #f8f9fa; border-radius: 0 6px 6px 0;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+            <span style="background: #6f42c1; color: white; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600;">
+              ${msg.persona.toUpperCase()}
+            </span>
+            <span style="color: #6c757d; font-size: 12px; font-style: italic;">
+              ${calculateTimeRange(msg.submissionTime)}
+            </span>
+          </div>
+          <div style="color: #212529; line-height: 1.5;">
+            ${msg.transformedMessage}
+          </div>
+        </div>
+        ${index < batch.length - 1 ? '<hr style="border: none; height: 1px; background: #dee2e6; margin: 25px 0;">' : ''}
+      `).join('')}
+      
+      <div style="margin-top: 30px; padding: 15px; background: #e7f3ff; border: 1px solid #b3d9ff; border-radius: 6px; font-size: 13px;">
+        <strong>🛡️ Privacy Guarantee:</strong> This feedback was collected anonymously and processed through AI transformation to protect submitter identity. Original submission times have been randomized.
+      </div>
+    </div>`;
+
+  return { subject, htmlContent };
+}
+
+// Helper function for time range calculation  
+function calculateTimeRange(submissionTime) {
+  const now = new Date();
+  const submitted = new Date(submissionTime);
+  const diffHours = Math.floor((now - submitted) / (1000 * 60 * 60));
+  
+  if (diffHours < 2) return "1-2 hours ago";
+  if (diffHours < 4) return "2-4 hours ago"; 
+  if (diffHours < 6) return "4-6 hours ago";
+  return "6+ hours ago";
+}
+```
+
+#### 4.2 Gmail API Implementation
 ```javascript
 async function sendEmailBatch(batch, env) {
-  const emailBody = formatBatchEmail(batch);
+  const { subject, htmlContent } = formatEmailContent(batch);
   
-  const payload = {
-    from: {
-      address: env.EMAIL_FROM,
-      name: "Anonymous Feedback System"
-    },
-    to: [{
-      email_address: {
-        address: env.EMAIL_TO,
-        name: "Emily Cogsdill"
-      }
-    }],
-    subject: `Anonymous Feedback Batch (${batch.length} messages)`,
-    textbody: emailBody,
-    track_clicks: false,
-    track_opens: false
-  };
+  // Create RFC 2822 formatted email
+  const email = [
+    `To: ${env.EMAIL_TO}`,
+    `Subject: ${subject}`,
+    `Content-Type: text/html; charset=utf-8`,
+    ``,
+    htmlContent
+  ].join('\r\n');
 
-  const response = await fetch('https://api.zeptomail.com/v1.1/email', {
+  // Base64 encode the email (Gmail API requirement)
+  const encodedEmail = btoa(unescape(encodeURIComponent(email)))
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
+
+  const response = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
     method: 'POST',
     headers: {
-      'Authorization': `Zoho-enczapikey ${env.ZEPTOMAIL_API_KEY}`,
-      'Content-Type': 'application/json',
-      'Accept': 'application/json'
+      'Authorization': `Bearer ${env.GMAIL_ACCESS_TOKEN}`,
+      'Content-Type': 'application/json'
     },
-    body: JSON.stringify(payload)
+    body: JSON.stringify({
+      raw: encodedEmail
+    })
   });
 
   if (!response.ok) {
     const error = await response.json();
-    throw new Error(`ZeptoMail API error: ${error.message}`);
+    throw new Error(`Gmail API error: ${error.error?.message || 'Unknown error'}`);
   }
 
   return await response.json();
@@ -444,9 +494,8 @@ To stop receiving these emails, reply with "UNSUBSCRIBE"
 ```javascript
 // Required Environment Variables
 const CONFIG = {
-  // ZeptoMail Configuration
-  ZEPTOMAIL_API_KEY: env.ZEPTOMAIL_API_KEY,
-  EMAIL_FROM: env.EMAIL_FROM || "noreply@anonymous-feedback.workers.dev",
+  // Gmail API Configuration
+  GMAIL_ACCESS_TOKEN: env.GMAIL_ACCESS_TOKEN,
   EMAIL_TO: "emily.cogsdill@gmail.com",
   
   // AI Service Configuration
@@ -512,9 +561,40 @@ BATCH_SIZE_LIMIT = "50"
 #### 1.2 Secrets Configuration
 ```bash
 # Set via Wrangler CLI
-wrangler secret put ZEPTOMAIL_API_KEY
+wrangler secret put GMAIL_ACCESS_TOKEN
 wrangler secret put CLAUDE_API_KEY
 ```
+
+#### 1.3 Gmail API Setup Instructions
+
+**Step 1: Enable Gmail API**
+1. Go to [Google Cloud Console](https://console.cloud.google.com)
+2. Create a new project or select existing one
+3. Enable the Gmail API:
+   - Go to "APIs & Services" → "Library"
+   - Search for "Gmail API" and enable it
+
+**Step 2: Create OAuth Credentials**
+1. Go to "APIs & Services" → "Credentials"
+2. Click "Create Credentials" → "OAuth client ID"
+3. Choose "Web application"
+4. Add your domain to authorized origins
+5. Download the credentials JSON file
+
+**Step 3: Get Access Token**
+1. Use Google OAuth 2.0 Playground: [oauth2.googleapis.com/playground](https://developers.google.com/oauthplayground/)
+2. In Step 1, select "Gmail API v1" → "https://www.googleapis.com/auth/gmail.send"
+3. Click "Authorize APIs"
+4. In Step 2, click "Exchange authorization code for tokens"
+5. Copy the "Access token" (starts with ya29....)
+
+**Step 4: Set Environment Variable**
+```bash
+wrangler secret put GMAIL_ACCESS_TOKEN
+# Paste your access token when prompted (ya29....)
+```
+
+**Note:** Access tokens expire after 1 hour. For production, implement refresh token flow or use service account authentication.
 
 ### 2. Custom Domain Setup
 
