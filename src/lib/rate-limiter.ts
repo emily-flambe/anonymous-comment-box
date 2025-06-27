@@ -1,7 +1,9 @@
+import { Env } from '../types/env';
+
 export interface RateLimitResult {
   remaining: number;
   reset: number; // Unix timestamp
-  allowed: boolean;
+  limit: number;
 }
 
 export interface RateLimitConfig {
@@ -11,8 +13,8 @@ export interface RateLimitConfig {
 
 export class RateLimitError extends Error {
   constructor(
-    public count: number,
-    public resetTime: number,
+    public readonly count: number,
+    public readonly resetTime: number,
     message: string = 'Rate limit exceeded'
   ) {
     super(message);
@@ -23,40 +25,48 @@ export class RateLimitError extends Error {
 export class RateLimiter {
   private config: RateLimitConfig;
 
-  constructor(config: RateLimitConfig = { windowMs: 60000, maxRequests: 10 }) {
-    this.config = config;
+  constructor(config: Partial<RateLimitConfig> = {}) {
+    this.config = {
+      windowMs: 60000, // 1 minute
+      maxRequests: 10,
+      ...config,
+    };
   }
 
   /**
-   * Generate rate limit key from request
+   * Generate rate limiting key from IP and session ID
    */
   generateKey(request: Request): string {
     const ip = request.headers.get('CF-Connecting-IP') || 
                request.headers.get('X-Forwarded-For') || 
+               request.headers.get('X-Real-IP') || 
                'unknown';
-    const sessionId = request.headers.get('X-Session-ID') || '';
+    const sessionId = request.headers.get('X-Session-ID') || 'default';
     return `rate_limit:${ip}:${sessionId}`;
   }
 
   /**
-   * Check and update rate limit for a key
+   * Check if request exceeds rate limit and increment counter
    */
-  async checkLimit(kv: KVNamespace, key: string): Promise<RateLimitResult> {
-    const current = await kv.get(key);
+  async checkLimit(key: string, env: Env): Promise<RateLimitResult> {
+    // Use KV store as Redis alternative in Cloudflare Workers
+    const current = await env.MESSAGE_QUEUE.get(key);
     const count = current ? parseInt(current) : 0;
-    const resetTime = Date.now() + this.config.windowMs;
     
     if (count >= this.config.maxRequests) {
-      // Get TTL to calculate actual reset time
-      const metadata = await kv.getWithMetadata(key);
-      const actualResetTime = metadata.metadata?.resetTime as number || resetTime;
+      // Get TTL info from metadata
+      const { metadata } = await env.MESSAGE_QUEUE.getWithMetadata(key);
+      const resetTime = (metadata as { resetTime?: number })?.resetTime || Date.now() + this.config.windowMs;
       
-      throw new RateLimitError(count, actualResetTime);
+      throw new RateLimitError(count, resetTime);
     }
 
     // Increment counter
     const newCount = count + 1;
-    await kv.put(key, newCount.toString(), {
+    const resetTime = Date.now() + this.config.windowMs;
+    
+    // Store with TTL
+    await env.MESSAGE_QUEUE.put(key, newCount.toString(), {
       expirationTtl: Math.floor(this.config.windowMs / 1000),
       metadata: { resetTime }
     });
@@ -64,33 +74,29 @@ export class RateLimiter {
     return {
       remaining: this.config.maxRequests - newCount,
       reset: resetTime,
-      allowed: true
+      limit: this.config.maxRequests
     };
   }
 
   /**
-   * Get current rate limit status without incrementing
+   * Get current rate limit status without incrementing counter
    */
-  async getStatus(kv: KVNamespace, key: string): Promise<RateLimitResult> {
-    const current = await kv.get(key);
-    const count = current ? parseInt(current) : 0;
-    const resetTime = Date.now() + this.config.windowMs;
-    
-    // Get metadata for actual reset time
-    const metadata = await kv.getWithMetadata(key);
-    const actualResetTime = metadata.metadata?.resetTime as number || resetTime;
+  async getStatus(key: string, env: Env): Promise<RateLimitResult> {
+    const { value, metadata } = await env.MESSAGE_QUEUE.getWithMetadata(key);
+    const count = value ? parseInt(value) : 0;
+    const resetTime = (metadata as { resetTime?: number })?.resetTime || Date.now() + this.config.windowMs;
 
     return {
       remaining: Math.max(0, this.config.maxRequests - count),
-      reset: actualResetTime,
-      allowed: count < this.config.maxRequests
+      reset: resetTime,
+      limit: this.config.maxRequests
     };
   }
 
   /**
-   * Reset rate limit for a key (useful for testing)
+   * Reset rate limit for a given key (for testing purposes)
    */
-  async reset(kv: KVNamespace, key: string): Promise<void> {
-    await kv.delete(key);
+  async resetLimit(key: string, env: Env): Promise<void> {
+    await env.MESSAGE_QUEUE.delete(key);
   }
 }
