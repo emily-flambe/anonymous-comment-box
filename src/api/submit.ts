@@ -3,7 +3,7 @@ import { transformMessage } from '../lib/ai-transform';
 import { queueMessage } from '../lib/queue';
 import { SubmitRequest, SubmitResponse, ValidationLimits } from '../types/api';
 import { RateLimiter, RateLimitError } from '../lib/rate-limiter';
-import { PersonaTransformer, PersonaTransformationError } from '../lib/ai-persona-transformer';
+import { PersonaTransformer, AIPersonaTransformerError } from '../lib/ai-persona-transformer';
 
 const rateLimiter = new RateLimiter();
 
@@ -91,7 +91,7 @@ export async function handleSubmission(
     } catch (error) {
       console.error('AI transformation failed:', error);
       
-      if (error instanceof PersonaTransformationError) {
+      if (error instanceof AIPersonaTransformerError) {
         return new Response(JSON.stringify({ 
           success: false,
           error: error.message 
