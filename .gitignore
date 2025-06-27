@@ -38,6 +38,9 @@ coverage/
 *.tmp
 *.temp
 
+# Git worktrees (temporary development branches)
+worktrees/
+
 # Python (from original)
 __pycache__/
 *.py[cod]
