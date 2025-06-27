@@ -177,11 +177,8 @@ export class PersonaTransformer {
       model: 'claude-3-haiku-20240307',
       max_tokens: 500,
       temperature,
+      system: systemPrompt,
       messages: [
-        {
-          role: 'system',
-          content: systemPrompt
-        },
         {
           role: 'user',
           content: message

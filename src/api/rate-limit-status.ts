@@ -1,11 +1,8 @@
 import { Env } from '../types/env';
+import { RateLimitStatus, ErrorResponse } from '../types/api';
 import { RateLimiter } from '../lib/rate-limiter';
 
-export interface RateLimitStatus {
-  remaining: number;
-  reset: number;
-  limit: number;
-}
+const rateLimiter = new RateLimiter();
 
 export async function handleRateLimitStatus(
   request: Request,
@@ -13,15 +10,16 @@ export async function handleRateLimitStatus(
   ctx: ExecutionContext
 ): Promise<Response> {
   try {
-    const rateLimiter = new RateLimiter();
+    // Generate rate limit key for the current request
     const rateLimitKey = rateLimiter.generateKey(request);
     
-    const status = await rateLimiter.getStatus(env.MESSAGE_QUEUE, rateLimitKey);
-    
+    // Get current rate limit status
+    const status = await rateLimiter.getStatus(rateLimitKey, env);
+
     const response: RateLimitStatus = {
       remaining: status.remaining,
       reset: status.reset,
-      limit: 10 // From rate limiter config
+      limit: status.limit
     };
 
     return new Response(JSON.stringify(response), {
@@ -31,7 +29,12 @@ export async function handleRateLimitStatus(
 
   } catch (error) {
     console.error('Rate limit status error:', error);
-    return new Response(JSON.stringify({ error: 'Failed to get rate limit status' }), {
+    
+    const errorResponse: ErrorResponse = {
+      error: 'Failed to get rate limit status'
+    };
+
+    return new Response(JSON.stringify(errorResponse), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
     });

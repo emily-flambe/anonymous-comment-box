@@ -43,7 +43,7 @@ export default {
 
       // Rate limit status endpoint
       if (url.pathname === '/api/rate-limit-status' && request.method === 'GET') {
-        const response = await handleRateLimitStatus(request, env);
+        const response = await handleRateLimitStatus(request, env, ctx);
         // Add CORS headers to the response
         Object.entries(corsHeaders).forEach(([key, value]) => {
           response.headers.set(key, value);
