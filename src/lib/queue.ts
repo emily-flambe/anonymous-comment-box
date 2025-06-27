@@ -10,23 +10,28 @@ interface QueuedMessage {
 export async function queueMessage(
   message: string,
   env: Env,
-  ctx: ExecutionContext
+  ctx: ExecutionContext,
+  testMode: boolean = false
 ): Promise<void> {
   // Generate unique ID
   const messageId = crypto.randomUUID();
   
-  // Random delay between 1-6 hours (in milliseconds)
-  const minDelay = 60 * 60 * 1000; // 1 hour
-  const maxDelay = 6 * 60 * 60 * 1000; // 6 hours
-  const randomDelay = Math.floor(Math.random() * (maxDelay - minDelay + 1)) + minDelay;
-  
-  const now = Date.now();
-  const scheduledFor = now + randomDelay;
+  // In test mode, send immediately; otherwise use random delay
+  let scheduledFor: number;
+  if (testMode) {
+    scheduledFor = Date.now(); // Send immediately
+  } else {
+    // Random delay between 1-6 hours (in milliseconds)
+    const minDelay = 60 * 60 * 1000; // 1 hour
+    const maxDelay = 6 * 60 * 60 * 1000; // 6 hours
+    const randomDelay = Math.floor(Math.random() * (maxDelay - minDelay + 1)) + minDelay;
+    scheduledFor = Date.now() + randomDelay;
+  }
   
   const queuedMessage: QueuedMessage = {
     id: messageId,
     message,
-    queuedAt: now,
+    queuedAt: Date.now(),
     scheduledFor,
   };
   
@@ -72,29 +77,46 @@ async function scheduleMessageDelivery(
 }
 
 async function sendEmail(message: string, env: Env): Promise<void> {
-  // This would integrate with SendGrid or Mailgun
-  // For now, we'll log it
-  console.log('Sending email to:', env.RECIPIENT_EMAIL);
-  console.log('Message:', message);
-  
-  // TODO: Implement actual email sending
-  // Example with SendGrid:
-  // const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
-  //   method: 'POST',
-  //   headers: {
-  //     'Authorization': `Bearer ${env.SENDGRID_API_KEY}`,
-  //     'Content-Type': 'application/json',
-  //   },
-  //   body: JSON.stringify({
-  //     personalizations: [{
-  //       to: [{ email: env.RECIPIENT_EMAIL }],
-  //     }],
-  //     from: { email: 'noreply@anonymous-feedback.com' },
-  //     subject: 'Anonymous Feedback',
-  //     content: [{
-  //       type: 'text/plain',
-  //       value: message,
-  //     }],
-  //   }),
-  // });
+  try {
+    console.log('Sending email to:', env.RECIPIENT_EMAIL);
+    
+    // Create RFC 2822 compliant email message
+    const emailContent = [
+      `To: ${env.RECIPIENT_EMAIL}`,
+      `Subject: Anonymous Feedback`,
+      `Content-Type: text/plain; charset=utf-8`,
+      ``,
+      message
+    ].join('\r\n');
+    
+    // Base64 encode the email (Gmail API requirement)
+    const encodedMessage = btoa(emailContent)
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '');
+    
+    // Send via Gmail API
+    const response = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${env.GMAIL_ACCESS_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        raw: encodedMessage
+      }),
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Gmail API error: ${response.status} - ${errorText}`);
+    }
+    
+    const result = await response.json() as { id: string };
+    console.log('Email sent successfully:', result.id);
+    
+  } catch (error) {
+    console.error('Failed to send email:', error);
+    throw error;
+  }
 }

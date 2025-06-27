@@ -28,6 +28,15 @@ export default {
         });
       }
 
+      // Test endpoint for immediate email delivery
+      if (url.pathname === '/api/test-submit' && request.method === 'POST') {
+        const response = await handleSubmission(request, env, ctx, true); // Enable test mode
+        return new Response(response.body, {
+          status: response.status,
+          headers: { ...response.headers, ...corsHeaders },
+        });
+      }
+
       // Health check
       if (url.pathname === '/api/health') {
         return new Response(JSON.stringify({ status: 'ok', timestamp: new Date().toISOString() }), {

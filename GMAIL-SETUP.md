@@ -17,7 +17,7 @@
 
 ### Step 3: Set Environment Variable
 ```bash
-wrangler secret put GMAIL_ACCESS_TOKEN
+npx wrangler secret put GMAIL_ACCESS_TOKEN
 # Paste your access token when prompted
 ```
 

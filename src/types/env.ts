@@ -7,8 +7,7 @@ export interface Env {
   
   // Environment variables
   ANTHROPIC_API_KEY: string;
-  SENDGRID_API_KEY?: string;
-  MAILGUN_API_KEY?: string;
+  GMAIL_ACCESS_TOKEN: string;
   RECIPIENT_EMAIL: string;
-  ENVIRONMENT: 'development' | 'production';
+  ENVIRONMENT: 'development' | 'production' | 'test';
 }

@@ -15,6 +15,7 @@ describe('API Submission Handler', () => {
       } as any,
       RATE_LIMITER: {},
       ANTHROPIC_API_KEY: 'test-key',
+      GMAIL_ACCESS_TOKEN: 'test-token',
       RECIPIENT_EMAIL: 'test@example.com',
       ENVIRONMENT: 'test',
     };
@@ -22,7 +23,8 @@ describe('API Submission Handler', () => {
     mockCtx = {
       waitUntil: vi.fn(),
       passThroughOnException: vi.fn(),
-    };
+      props: {} as any,
+    } as ExecutionContext;
   });
 
   it('should reject empty message', async () => {
@@ -36,7 +38,7 @@ describe('API Submission Handler', () => {
     const data = await response.json();
 
     expect(response.status).toBe(400);
-    expect(data.error).toBe('Message cannot be empty');
+    expect((data as any).error).toBe('Message cannot be empty');
   });
 
   it('should reject message over 5000 characters', async () => {
@@ -51,7 +53,7 @@ describe('API Submission Handler', () => {
     const data = await response.json();
 
     expect(response.status).toBe(400);
-    expect(data.error).toBe('Message too long (max 5000 characters)');
+    expect((data as any).error).toBe('Message too long (max 5000 characters)');
   });
 
   it('should enforce rate limiting', async () => {
@@ -71,6 +73,6 @@ describe('API Submission Handler', () => {
     const data = await response.json();
 
     expect(response.status).toBe(429);
-    expect(data.error).toContain('Rate limit exceeded');
+    expect((data as any).error).toContain('Rate limit exceeded');
   });
 });

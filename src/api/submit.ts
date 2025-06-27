@@ -5,7 +5,8 @@ import { queueMessage } from '../lib/queue';
 export async function handleSubmission(
   request: Request,
   env: Env,
-  ctx: ExecutionContext
+  ctx: ExecutionContext,
+  testMode: boolean = false
 ): Promise<Response> {
   try {
     // Parse request body
@@ -49,10 +50,19 @@ export async function handleSubmission(
     }
 
     // Transform message with AI
-    const transformedMessage = await transformMessage(message, env);
+    let transformedMessage: string;
+    try {
+      transformedMessage = await transformMessage(message, env);
+    } catch (error) {
+      console.error('AI transformation failed:', error);
+      return new Response(JSON.stringify({ error: 'AI transformation service unavailable' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
 
-    // Queue message with random delay
-    await queueMessage(transformedMessage, env, ctx);
+    // Queue message with random delay (or immediate if test mode)
+    await queueMessage(transformedMessage, env, ctx, testMode);
 
     // Update rate limit counter
     const currentCount = hourlyCount ? parseInt(hourlyCount) : 0;

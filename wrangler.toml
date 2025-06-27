@@ -11,18 +11,18 @@ vars = { ENVIRONMENT = "development" }
 # KV Namespaces for message queue
 [[kv_namespaces]]
 binding = "MESSAGE_QUEUE"
-id = "MESSAGE_QUEUE_ID"
-preview_id = "MESSAGE_QUEUE_PREVIEW_ID"
+id = "f8a0c5236b7044fbbd3ccda02c9001a0"
+preview_id = "d72ced350fb9428e91b17909b388ed83"
 
 # Durable Objects (if needed for future features)
 # [[durable_objects.bindings]]
 # name = "RATE_LIMITER"
 # class_name = "RateLimiter"
 
-# Environment variables (to be set in Cloudflare dashboard)
-# ANTHROPIC_API_KEY
-# SENDGRID_API_KEY or MAILGUN_API_KEY
-# RECIPIENT_EMAIL
+# Environment variables (to be set in Cloudflare dashboard or wrangler secrets)
+# ANTHROPIC_API_KEY - set via: wrangler secret put ANTHROPIC_API_KEY
+# GMAIL_ACCESS_TOKEN - set via: wrangler secret put GMAIL_ACCESS_TOKEN  
+# RECIPIENT_EMAIL - set via: wrangler secret put RECIPIENT_EMAIL
 
 # Rate limiting
 [[unsafe.bindings]]
