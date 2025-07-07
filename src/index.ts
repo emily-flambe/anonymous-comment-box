@@ -1,5 +1,7 @@
 import { Env } from './types/env';
 import { handleSubmission } from './api/submit';
+import { handlePreview } from './api/preview';
+import { handleRateLimitStatus } from './api/rate-limit-status';
 import { handleStaticAssets } from './lib/static';
 
 export default {
@@ -10,7 +12,7 @@ export default {
     const corsHeaders = {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
+      'Access-Control-Allow-Headers': 'Content-Type, X-Session-ID',
     };
 
     // Handle CORS preflight
@@ -22,19 +24,41 @@ export default {
       // API Routes
       if (url.pathname === '/api/submit' && request.method === 'POST') {
         const response = await handleSubmission(request, env, ctx);
-        return new Response(response.body, {
-          status: response.status,
-          headers: { ...response.headers, ...corsHeaders },
+        // Add CORS headers to the response
+        Object.entries(corsHeaders).forEach(([key, value]) => {
+          response.headers.set(key, value);
         });
+        return response;
+      }
+
+      // Preview endpoint for message transformation
+      if (url.pathname === '/api/preview' && request.method === 'POST') {
+        const response = await handlePreview(request, env, ctx);
+        // Add CORS headers to the response
+        Object.entries(corsHeaders).forEach(([key, value]) => {
+          response.headers.set(key, value);
+        });
+        return response;
+      }
+
+      // Rate limit status endpoint
+      if (url.pathname === '/api/rate-limit-status' && request.method === 'GET') {
+        const response = await handleRateLimitStatus(request, env, ctx);
+        // Add CORS headers to the response
+        Object.entries(corsHeaders).forEach(([key, value]) => {
+          response.headers.set(key, value);
+        });
+        return response;
       }
 
       // Test endpoint for immediate email delivery
       if (url.pathname === '/api/test-submit' && request.method === 'POST') {
         const response = await handleSubmission(request, env, ctx, true); // Enable test mode
-        return new Response(response.body, {
-          status: response.status,
-          headers: { ...response.headers, ...corsHeaders },
+        // Add CORS headers to the response
+        Object.entries(corsHeaders).forEach(([key, value]) => {
+          response.headers.set(key, value);
         });
+        return response;
       }
 
       // Health check
@@ -45,7 +69,7 @@ export default {
       }
 
       // Static assets and frontend
-      return handleStaticAssets(request, url);
+      return handleStaticAssets(request, url, env);
       
     } catch (error) {
       console.error('Worker error:', error);

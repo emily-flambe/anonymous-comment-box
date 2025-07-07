@@ -1,0 +1,11 @@
+# Development Environment Variables
+# Copy this file to .dev.vars and add your actual API keys
+
+# Required for AI persona transformation
+ANTHROPIC_API_KEY=your-anthropic-api-key-here
+
+# Required for email functionality (if testing email features)
+RECIPIENT_EMAIL=your-recipient-email@example.com
+GMAIL_CLIENT_ID=your-gmail-client-id
+GMAIL_CLIENT_SECRET=your-gmail-client-secret  
+GMAIL_REFRESH_TOKEN=your-gmail-refresh-token
