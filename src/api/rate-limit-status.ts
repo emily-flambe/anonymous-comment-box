@@ -7,7 +7,7 @@ const rateLimiter = new RateLimiter();
 export async function handleRateLimitStatus(
   request: Request,
   env: Env,
-  ctx: ExecutionContext
+  _ctx: ExecutionContext
 ): Promise<Response> {
   try {
     // Generate rate limit key for the current request

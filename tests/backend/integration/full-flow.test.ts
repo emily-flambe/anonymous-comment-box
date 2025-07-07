@@ -46,10 +46,11 @@ describe('Full Application Flow Integration Tests', () => {
         list: vi.fn(),
       } as any,
       ANTHROPIC_API_KEY: 'test-api-key',
+      AI_WORKER_API_SECRET_KEY: 'test-ai-worker-key',
       GMAIL_ACCESS_TOKEN: 'test-gmail-token',
       RECIPIENT_EMAIL: 'recipient@example.com',
       ENVIRONMENT: 'test',
-      RATE_LIMITER: {} as any,
+      RATE_LIMITER: { limit: vi.fn().mockResolvedValue({ success: true }) } as any,
     };
 
     mockCtx = {

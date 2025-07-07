@@ -23,10 +23,11 @@ describe('PersonaTransformer', () => {
     mockEnv = {
       MESSAGE_QUEUE: {} as any,
       ANTHROPIC_API_KEY: 'test-api-key',
+      AI_WORKER_API_SECRET_KEY: 'test-ai-worker-key',
       GMAIL_ACCESS_TOKEN: 'test-token',
       RECIPIENT_EMAIL: 'test@example.com',
       ENVIRONMENT: 'test',
-      RATE_LIMITER: {} as any,
+      RATE_LIMITER: { limit: vi.fn().mockResolvedValue({ success: true }) } as any,
     };
 
     transformer = new PersonaTransformer(mockEnv);

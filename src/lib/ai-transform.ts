@@ -1,5 +1,5 @@
 import { Env } from '../types/env';
-import Anthropic from '@anthropic-ai/sdk';
+import { createAIClient, AIClientError } from './ai-client';
 
 // AI personas for message transformation (PRD-specified personas)
 const PRESET_PERSONAS: Record<string, {
@@ -97,10 +97,8 @@ export async function transformMessageWithPersona(
   customPersona?: string | null,
   env?: Env
 ): Promise<string> {
-  // Initialize Anthropic client
-  const anthropic = new Anthropic({
-    apiKey: env?.ANTHROPIC_API_KEY || '',
-  });
+  // Initialize AI client
+  const aiClient = createAIClient(env || {} as Env);
 
   let systemPrompt: string;
   let temperature: number;
@@ -136,23 +134,35 @@ Original message:
 
 Rewrite the message according to the transformation instructions:`;
 
-  const response = await anthropic.messages.create({
-    model: 'claude-3-haiku-20240307',
-    max_tokens: 1000,
-    temperature: temperature,
-    messages: [
-      {
-        role: 'user',
-        content: prompt,
-      },
-    ],
-  });
+  try {
+    const response = await aiClient.chatCompletion({
+      messages: [
+        {
+          role: 'user',
+          content: prompt,
+        },
+      ],
+      max_tokens: 1000,
+      temperature: temperature,
+    });
 
-  if (response.content[0].type !== 'text' || !response.content[0].text.trim()) {
-    throw new Error('AI transformation returned empty or invalid response');
+    if (!response.choices || response.choices.length === 0) {
+      throw new Error('AI transformation returned no choices');
+    }
+
+    const transformedMessage = response.choices[0].message.content;
+    if (!transformedMessage || !transformedMessage.trim()) {
+      throw new Error('AI transformation returned empty or invalid response');
+    }
+
+    return transformedMessage.trim();
+  } catch (error) {
+    if (error instanceof AIClientError) {
+      // Re-throw AIClientError with more context
+      throw new Error(`AI transformation failed: ${error.message}`);
+    }
+    throw error;
   }
-
-  return response.content[0].text.trim();
 }
 
 // Legacy function for backward compatibility (random persona selection)
@@ -160,10 +170,8 @@ export async function transformMessage(originalMessage: string, env: Env): Promi
   // Select random legacy persona for backward compatibility
   const persona = legacyPersonas[Math.floor(Math.random() * legacyPersonas.length)];
   
-  // Initialize Anthropic client
-  const anthropic = new Anthropic({
-    apiKey: env.ANTHROPIC_API_KEY,
-  });
+  // Initialize AI client
+  const aiClient = createAIClient(env);
 
   const prompt = `You are a message transformation assistant. Your task is to rewrite the following message in a different style to preserve anonymity while maintaining the core meaning and intent.
 
@@ -182,21 +190,33 @@ Original message:
 
 Rewrite the message in the specified style:`;
 
-  const response = await anthropic.messages.create({
-    model: 'claude-3-haiku-20240307',
-    max_tokens: 1000,
-    temperature: 0.7,
-    messages: [
-      {
-        role: 'user',
-        content: prompt,
-      },
-    ],
-  });
+  try {
+    const response = await aiClient.chatCompletion({
+      messages: [
+        {
+          role: 'user',
+          content: prompt,
+        },
+      ],
+      max_tokens: 1000,
+      temperature: 0.7,
+    });
 
-  if (response.content[0].type !== 'text' || !response.content[0].text.trim()) {
-    throw new Error('AI transformation returned empty or invalid response');
+    if (!response.choices || response.choices.length === 0) {
+      throw new Error('AI transformation returned no choices');
+    }
+
+    const transformedMessage = response.choices[0].message.content;
+    if (!transformedMessage || !transformedMessage.trim()) {
+      throw new Error('AI transformation returned empty or invalid response');
+    }
+
+    return transformedMessage.trim();
+  } catch (error) {
+    if (error instanceof AIClientError) {
+      // Re-throw AIClientError with more context
+      throw new Error(`AI transformation failed: ${error.message}`);
+    }
+    throw error;
   }
-
-  return response.content[0].text.trim();
 }

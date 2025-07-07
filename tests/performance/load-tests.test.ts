@@ -54,8 +54,9 @@ describe('Performance and Load Tests', () => {
           metadata: null
         }),
       } as any,
-      RATE_LIMITER: {},
+      RATE_LIMITER: { limit: vi.fn().mockResolvedValue({ success: true }) },
       ANTHROPIC_API_KEY: 'test-key',
+      AI_WORKER_API_SECRET_KEY: 'test-ai-worker-key',
       GMAIL_ACCESS_TOKEN: 'test-token',
       RECIPIENT_EMAIL: 'test@example.com',
       ENVIRONMENT: 'test',

@@ -3,6 +3,7 @@ import { handleSubmission } from './api/submit';
 import { handlePreview } from './api/preview';
 import { handleRateLimitStatus } from './api/rate-limit-status';
 import { handleStaticAssets } from './lib/static';
+import { createAIClient, AIClientError } from './lib/ai-client';
 
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
@@ -61,11 +62,54 @@ export default {
         return response;
       }
 
+      // Chat endpoint
+      if (url.pathname === '/api/chat' && request.method === 'POST') {
+        try {
+          const body = await request.json() as { message?: string };
+          const { message } = body;
+          
+          if (!message || typeof message !== 'string') {
+            return new Response(JSON.stringify({ error: 'Message is required and must be a string' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json', ...corsHeaders },
+            });
+          }
+          
+          const aiClient = createAIClient(env);
+          const response = await aiClient.complete(message, {
+            temperature: 0.7,
+            max_tokens: 1000,
+            systemPrompt: 'You are a helpful AI assistant. Be concise but friendly in your responses.'
+          });
+          
+          return new Response(JSON.stringify({ response }), {
+            headers: { 'Content-Type': 'application/json', ...corsHeaders },
+          });
+        } catch (error) {
+          console.error('Chat API error:', error);
+          
+          let errorMessage = 'An error occurred while processing your request';
+          if (error instanceof AIClientError) {
+            errorMessage = error.message;
+          }
+          
+          return new Response(JSON.stringify({ error: errorMessage }), {
+            status: 500,
+            headers: { 'Content-Type': 'application/json', ...corsHeaders },
+          });
+        }
+      }
+
       // Health check
       if (url.pathname === '/api/health') {
         return new Response(JSON.stringify({ status: 'ok', timestamp: new Date().toISOString() }), {
           headers: { 'Content-Type': 'application/json', ...corsHeaders },
         });
+      }
+
+      // AI test page
+      if (url.pathname === '/ai-test') {
+        return handleStaticAssets(request, url);
       }
 
       // Static assets and frontend
