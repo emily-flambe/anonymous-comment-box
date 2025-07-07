@@ -889,7 +889,13 @@ function resetForm() {
     // This preserves user's persona choice for multiple submissions
 }
 
-<<<<<<< HEAD
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', () => {
+    restoreSessionState();
+    initializeRateLimit();
+});
+`;
+
 const aiTestContent = `<!DOCTYPE html>
 <html lang="en">
 <head>

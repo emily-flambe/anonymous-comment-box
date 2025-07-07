@@ -8,7 +8,7 @@ const rateLimiter = new RateLimiter();
 export async function handlePreview(
   request: Request,
   env: Env,
-  ctx: ExecutionContext
+  _ctx: ExecutionContext
 ): Promise<Response> {
   try {
     // Parse and validate request body
@@ -19,7 +19,7 @@ export async function handlePreview(
       return createErrorResponse(validationError.error, validationError.status);
     }
 
-    const { message, persona, customPersona, sessionId } = body;
+    const { message, persona, customPersona } = body;
 
     // Check rate limiting
     const rateLimitKey = rateLimiter.generateKey(request);
