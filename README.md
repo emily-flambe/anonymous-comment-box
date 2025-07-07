@@ -94,12 +94,30 @@ User Input → AI Transformation → Time-Blind Queue → Email Delivery
 
 ## 📚 Documentation
 
+### 🚀 Getting Started
 - [**Quick Start Guide**](docs/setup/quickstart.md) - Get running in 5 minutes
-- [**Gmail Setup**](docs/setup/gmail-setup.md) - OAuth configuration walkthrough
+- [**Gmail API Setup**](docs/setup/gmail-setup.md) - Complete OAuth configuration
 - [**Deployment Guide**](docs/setup/deployment.md) - Cloudflare Workers deployment
-- [**Architecture Overview**](docs/design/architecture.md) - Technical design details
-- [**Development Guide**](docs/contributing/development.md) - Local development setup
-- [**API Reference**](docs/design/api-reference.md) - Endpoint documentation
+
+### 🏗️ Architecture & Design
+- [**System Architecture**](docs/design/architecture.md) - Technical overview and design decisions
+- [**API Reference**](docs/design/api-reference.md) - Complete API documentation
+- [**Security Model**](docs/design/security.md) - Privacy and security implementation
+
+### ✨ Features
+- [**Message Customization**](docs/features/message-customization.md) - AI personas and preview system (Future)
+- [**Rate Limiting**](docs/features/rate-limiting.md) - Abuse prevention system
+- [**Email Templates**](docs/features/email-templates.md) - Delivery formatting
+
+### 🛠️ Development
+- [**Development Setup**](docs/contributing/development.md) - Local development environment
+- [**Testing Guide**](docs/contributing/testing.md) - Test suites and strategies
+- [**Contributing Guidelines**](docs/contributing/contributing.md) - How to contribute
+
+### 📊 Operations
+- [**Monitoring**](docs/operations/monitoring.md) - Metrics and alerting
+- [**Troubleshooting**](docs/operations/troubleshooting.md) - Common issues and solutions
+- [**Performance**](docs/operations/performance.md) - Optimization and scaling
 
 ## 🚀 Tech Stack
 

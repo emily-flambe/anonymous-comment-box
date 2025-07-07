@@ -25,18 +25,73 @@ const htmlContent = `<!DOCTYPE html>
 
         <main>
             <form id="feedbackForm" class="feedback-form">
+                <!-- Persona Selection -->
+                <div class="form-group">
+                    <label for="personaSelect">Message Style (Optional)</label>
+                    <select id="personaSelect" class="persona-select">
+                        <option value="">No transformation (original style)</option>
+                        <option value="internet-random">Internet Random - casual, memes, abbreviations</option>
+                        <option value="barely-literate">Barely Literate - simple vocab, poor grammar</option>
+                        <option value="extremely-serious">Extremely Serious - formal, academic tone</option>
+                        <option value="super-nice">Super Nice - overly polite, encouraging</option>
+                        <option value="custom">Custom style...</option>
+                    </select>
+                    <div class="persona-description" id="personaDescription"></div>
+                </div>
+
+                <!-- Custom Persona Input -->
+                <div class="form-group hidden" id="customPersonaGroup">
+                    <label for="customPersona">Custom Style Description</label>
+                    <textarea 
+                        id="customPersona" 
+                        name="customPersona" 
+                        rows="3" 
+                        maxlength="500"
+                        placeholder="Describe how you want your message to be transformed (e.g., 'Make it sound like a pirate', 'Use corporate jargon', etc.)"
+                    ></textarea>
+                    <div class="char-count">
+                        <span id="customPersonaCount">0</span> / 500 characters
+                    </div>
+                </div>
+
+                <!-- Message Input -->
                 <div class="form-group">
                     <label for="message">Your Message</label>
                     <textarea 
                         id="message" 
                         name="message" 
                         rows="6" 
-                        maxlength="5000"
+                        maxlength="2000"
                         placeholder="Share your thoughts, feedback, or concerns..."
                         required
                     ></textarea>
                     <div class="char-count">
-                        <span id="charCount">0</span> / 5000 characters
+                        <span id="charCount">0</span> / 2000 characters
+                    </div>
+                </div>
+
+                <!-- Preview Section -->
+                <div class="preview-section">
+                    <div class="preview-controls">
+                        <button type="button" class="preview-btn" id="previewBtn">
+                            Preview Transformation
+                        </button>
+                        <div class="rate-limit-status" id="rateLimitStatus">
+                            <span id="rateLimitText">Previews remaining: <span id="rateLimitCount">10</span>/10</span>
+                        </div>
+                    </div>
+                    
+                    <div class="preview-container hidden" id="previewContainer">
+                        <div class="preview-comparison">
+                            <div class="preview-original">
+                                <h4>Original Message</h4>
+                                <div class="preview-text" id="originalPreview"></div>
+                            </div>
+                            <div class="preview-transformed">
+                                <h4>Transformed Message</h4>
+                                <div class="preview-text" id="transformedPreview"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -122,8 +177,9 @@ header {
 h1 {
     font-size: 2.5rem;
     font-weight: 700;
-    color: var(--primary-color);
+    color: #0066ff;
     margin-bottom: 0.5rem;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
 }
 
 .subtitle {
@@ -286,6 +342,170 @@ footer a:hover {
     text-decoration: underline;
 }
 
+/* Persona Selector Styles */
+.persona-select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 1rem;
+    font-family: inherit;
+    background-color: var(--bg-primary);
+    transition: border-color 0.2s;
+}
+
+.persona-select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.persona-description {
+    margin-top: 0.5rem;
+    padding: 0.75rem;
+    background-color: var(--bg-secondary);
+    border-radius: 6px;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    min-height: 2rem;
+}
+
+.persona-description.empty {
+    display: none;
+}
+
+/* Preview Section Styles */
+.preview-section {
+    margin-bottom: 1.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1rem;
+    background-color: var(--bg-secondary);
+}
+
+.preview-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.preview-btn {
+    padding: 0.75rem 1.5rem;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.preview-btn:hover:not(:disabled) {
+    background: var(--primary-hover);
+}
+
+.preview-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.preview-btn.loading {
+    position: relative;
+}
+
+.preview-btn.loading::after {
+    content: '';
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid transparent;
+    border-top: 2px solid white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: translateY(-50%) rotate(0deg); }
+    100% { transform: translateY(-50%) rotate(360deg); }
+}
+
+.rate-limit-status {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.rate-limit-warning {
+    color: var(--error-color);
+    font-weight: 600;
+}
+
+.preview-container {
+    margin-top: 1rem;
+}
+
+.preview-comparison {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.preview-original,
+.preview-transformed {
+    background: var(--bg-primary);
+    border-radius: 6px;
+    padding: 1rem;
+    border: 1px solid var(--border-color);
+}
+
+.preview-original h4,
+.preview-transformed h4 {
+    margin: 0 0 0.5rem 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.preview-text {
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: var(--text-primary);
+    min-height: 3rem;
+    white-space: pre-wrap;
+}
+
+.preview-error {
+    color: var(--error-color);
+    font-style: italic;
+}
+
+/* Loading States */
+.loading-skeleton {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: loading-shimmer 1.5s infinite;
+}
+
+@keyframes loading-shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* Error States */
+.error-state {
+    color: var(--error-color);
+    background-color: rgba(239, 68, 68, 0.1);
+    border: 1px solid var(--error-color);
+    border-radius: 6px;
+    padding: 0.75rem;
+    margin-top: 0.5rem;
+}
+
 @media (max-width: 640px) {
     .container {
         padding: 1rem;
@@ -298,6 +518,21 @@ footer a:hover {
     .feedback-form {
         padding: 1.5rem;
     }
+
+    .preview-comparison {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+
+    .preview-controls {
+        flex-direction: column;
+        gap: 0.75rem;
+        align-items: stretch;
+    }
+
+    .preview-btn {
+        width: 100%;
+    }
 }`;
 
 const jsContent = `// DOM elements
@@ -309,19 +544,219 @@ const successMessage = document.getElementById('successMessage');
 const errorMessage = document.getElementById('errorMessage');
 const errorText = document.getElementById('errorText');
 
-// Character counter
+// New persona and preview elements
+const personaSelect = document.getElementById('personaSelect');
+const personaDescription = document.getElementById('personaDescription');
+const customPersonaGroup = document.getElementById('customPersonaGroup');
+const customPersonaTextarea = document.getElementById('customPersona');
+const customPersonaCount = document.getElementById('customPersonaCount');
+const previewBtn = document.getElementById('previewBtn');
+const previewContainer = document.getElementById('previewContainer');
+const originalPreview = document.getElementById('originalPreview');
+const transformedPreview = document.getElementById('transformedPreview');
+const rateLimitStatus = document.getElementById('rateLimitStatus');
+const rateLimitText = document.getElementById('rateLimitText');
+const rateLimitCount = document.getElementById('rateLimitCount');
+
+// Session management
+let sessionId = localStorage.getItem('sessionId') || generateSessionId();
+localStorage.setItem('sessionId', sessionId);
+
+// Rate limiting state
+let rateLimitRemaining = 10;
+let rateLimitReset = Date.now() + 60000; // 1 minute from now
+
+// Persona descriptions and examples
+const personaDescriptions = {
+    'internet-random': {
+        description: 'Casual internet slang with abbreviations, mild typos, and meme references.',
+        example: 'Original: "I think this is a great idea." → "ngl this idea slaps 💯 we should def do this fr fr"'
+    },
+    'barely-literate': {
+        description: 'Simple vocabulary with poor grammar and informal structure.',
+        example: 'Original: "I disagree with this decision." → "i dont like this thing cuz it dont make sense to me"'
+    },
+    'extremely-serious': {
+        description: 'Formal, academic language with professional vocabulary.',
+        example: 'Original: "This is really bad." → "This matter requires immediate systematic remediation."'
+    },
+    'super-nice': {
+        description: 'Overly polite, encouraging, and positive language.',
+        example: 'Original: "This feature is broken." → "I hope this feedback helps! The feature might benefit from some adjustments. Thank you! 😊"'
+    }
+};
+
+function generateSessionId() {
+    return 'session_' + Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
+}
+
+// Character counters
 messageTextarea.addEventListener('input', () => {
     const length = messageTextarea.value.length;
     charCount.textContent = length;
     
-    if (length > 4500) {
+    if (length > 1800) {
         charCount.style.color = '#ef4444';
     } else {
         charCount.style.color = '#6b7280';
     }
 });
 
-// Form submission
+customPersonaTextarea.addEventListener('input', () => {
+    const length = customPersonaTextarea.value.length;
+    customPersonaCount.textContent = length;
+    
+    if (length > 450) {
+        customPersonaCount.style.color = '#ef4444';
+    } else {
+        customPersonaCount.style.color = '#6b7280';
+    }
+});
+
+// Persona selection functionality
+personaSelect.addEventListener('change', () => {
+    const selectedPersona = personaSelect.value;
+    
+    // Save selection to session storage
+    sessionStorage.setItem('selectedPersona', selectedPersona);
+    
+    if (selectedPersona === 'custom') {
+        customPersonaGroup.classList.remove('hidden');
+        updatePersonaDescription('Enter a custom style description above');
+    } else {
+        customPersonaGroup.classList.add('hidden');
+        customPersonaTextarea.value = '';
+        customPersonaCount.textContent = '0';
+        
+        if (selectedPersona && personaDescriptions[selectedPersona]) {
+            updatePersonaDescription(
+                personaDescriptions[selectedPersona].description + 
+                '<br><br><strong>Example:</strong> ' + 
+                personaDescriptions[selectedPersona].example
+            );
+        } else {
+            updatePersonaDescription('');
+        }
+    }
+});
+
+// Custom persona functionality
+customPersonaTextarea.addEventListener('input', () => {
+    sessionStorage.setItem('customPersona', customPersonaTextarea.value);
+});
+
+function updatePersonaDescription(text) {
+    if (text) {
+        personaDescription.innerHTML = text;
+        personaDescription.classList.remove('empty');
+    } else {
+        personaDescription.textContent = '';
+        personaDescription.classList.add('empty');
+    }
+}
+
+// Preview functionality
+previewBtn.addEventListener('click', async () => {
+    const message = messageTextarea.value.trim();
+    
+    if (!message) {
+        showError('Please enter a message to preview');
+        return;
+    }
+    
+    if (rateLimitRemaining <= 0) {
+        showError('Preview limit reached. Please wait before trying again.');
+        return;
+    }
+    
+    await generatePreview(message);
+});
+
+async function generatePreview(message) {
+    // Update UI for loading state
+    previewBtn.disabled = true;
+    previewBtn.classList.add('loading');
+    previewBtn.textContent = 'Generating Preview...';
+    
+    const selectedPersona = personaSelect.value;
+    const customPersona = selectedPersona === 'custom' ? customPersonaTextarea.value.trim() : '';
+    
+    try {
+        const requestBody = {
+            message: message,
+            sessionId: sessionId
+        };
+        
+        if (selectedPersona && selectedPersona !== 'custom') {
+            requestBody.persona = selectedPersona;
+        } else if (customPersona) {
+            requestBody.customPersona = customPersona;
+        }
+        
+        const response = await fetch('/api/preview', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Session-ID': sessionId
+            },
+            body: JSON.stringify(requestBody),
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            displayPreview(data);
+            updateRateLimit(data.rateLimitRemaining, data.rateLimitReset);
+        } else if (response.status === 429) {
+            showError('Rate limit exceeded. Please wait before trying again.');
+        } else {
+            showError(data.error || 'Failed to generate preview. Please try again.');
+        }
+    } catch (error) {
+        console.error('Preview error:', error);
+        showError('Network error. Please check your connection and try again.');
+    } finally {
+        // Reset button state
+        previewBtn.disabled = false;
+        previewBtn.classList.remove('loading');
+        previewBtn.textContent = 'Preview Transformation';
+    }
+}
+
+function displayPreview(data) {
+    originalPreview.textContent = data.originalMessage;
+    
+    // Show fallback warning if AI transformation failed
+    if (data.fallbackUsed || data.error) {
+        transformedPreview.innerHTML = \`<div class="error-state">
+            ⚠️ AI transformation failed: \${data.error || 'Service temporarily unavailable'}
+            <br><br>
+            <strong>Original message shown below:</strong>
+            <br><br>
+            \${data.transformedMessage}
+        </div>\`;
+    } else {
+        transformedPreview.textContent = data.transformedMessage;
+    }
+    
+    previewContainer.classList.remove('hidden');
+}
+
+function updateRateLimit(remaining, reset) {
+    rateLimitRemaining = remaining;
+    rateLimitReset = reset;
+    rateLimitCount.textContent = remaining;
+    
+    if (remaining <= 2) {
+        rateLimitStatus.classList.add('rate-limit-warning');
+        rateLimitText.innerHTML = \`⚠️ Only <span id="rateLimitCount">\${remaining}</span> previews remaining\`;
+    } else {
+        rateLimitStatus.classList.remove('rate-limit-warning');
+        rateLimitText.innerHTML = \`Previews remaining: <span id="rateLimitCount">\${remaining}</span>/10\`;
+    }
+}
+
+// Form submission with persona support
 feedbackForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     
@@ -337,19 +772,36 @@ feedbackForm.addEventListener('submit', async (e) => {
     submitBtn.textContent = 'Sending...';
     messageTextarea.disabled = true;
     
+    const selectedPersona = personaSelect.value;
+    const customPersona = selectedPersona === 'custom' ? customPersonaTextarea.value.trim() : '';
+    
     try {
+        const requestBody = {
+            message: message,
+            sessionId: sessionId
+        };
+        
+        if (selectedPersona && selectedPersona !== 'custom') {
+            requestBody.persona = selectedPersona;
+        } else if (customPersona) {
+            requestBody.customPersona = customPersona;
+        }
+        
         const response = await fetch('/api/submit', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'X-Session-ID': sessionId
             },
-            body: JSON.stringify({ message }),
+            body: JSON.stringify(requestBody),
         });
         
         const data = await response.json();
         
         if (response.ok) {
             showSuccess();
+        } else if (response.status === 429) {
+            showError('Rate limit exceeded. Please wait before trying again.');
         } else {
             showError(data.error || 'Failed to send message. Please try again.');
         }
@@ -376,6 +828,54 @@ function showError(message) {
     successMessage.classList.add('hidden');
 }
 
+// Initialize rate limit status on page load
+async function initializeRateLimit() {
+    try {
+        const response = await fetch('/api/rate-limit-status', {
+            headers: {
+                'X-Session-ID': sessionId
+            }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            updateRateLimit(data.remaining, data.reset);
+        }
+    } catch (error) {
+        console.error('Failed to get rate limit status:', error);
+        // Use default values
+    }
+}
+
+// Restore session state on page load
+function restoreSessionState() {
+    const savedPersona = sessionStorage.getItem('selectedPersona');
+    const savedCustomPersona = sessionStorage.getItem('customPersona');
+    
+    if (savedPersona) {
+        personaSelect.value = savedPersona;
+        personaSelect.dispatchEvent(new Event('change'));
+    }
+    
+    if (savedCustomPersona) {
+        customPersonaTextarea.value = savedCustomPersona;
+        customPersonaCount.textContent = savedCustomPersona.length;
+    }
+}
+
+// Rate limit timer
+function updateRateLimitTimer() {
+    const now = Date.now();
+    if (now >= rateLimitReset) {
+        rateLimitRemaining = 10;
+        rateLimitReset = now + 60000; // Reset for another minute
+        updateRateLimit(rateLimitRemaining, rateLimitReset);
+    }
+}
+
+// Update rate limit timer every second
+setInterval(updateRateLimitTimer, 1000);
+
 function resetForm() {
     feedbackForm.style.display = 'block';
     successMessage.classList.add('hidden');
@@ -383,8 +883,13 @@ function resetForm() {
     messageTextarea.value = '';
     charCount.textContent = '0';
     charCount.style.color = '#6b7280';
-}`;
+    previewContainer.classList.add('hidden');
+    
+    // Don't reset persona selection on form reset
+    // This preserves user's persona choice for multiple submissions
+}
 
+<<<<<<< HEAD
 const aiTestContent = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -761,10 +1266,23 @@ const aiTestContent = `<!DOCTYPE html>
 </body>
 </html>`;
 
-export async function handleStaticAssets(request: Request, url: URL): Promise<Response> {
+export async function handleStaticAssets(request: Request, url: URL, env?: any): Promise<Response> {
   const path = staticFiles[url.pathname] || url.pathname;
   
   try {
+    // Check if ASSETS is available (wrangler dev with assets configured)
+    if (env?.ASSETS) {
+      try {
+        const assetResponse = await env.ASSETS.fetch(request);
+        if (assetResponse.status !== 404) {
+          return assetResponse;
+        }
+      } catch (assetsError) {
+        console.log('Assets fetch failed:', assetsError);
+      }
+    }
+    
+    // Fallback to embedded content
     if (path === '/index.html' || path === '/') {
       return new Response(htmlContent, {
         headers: { 'Content-Type': 'text/html; charset=utf-8' },

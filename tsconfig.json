@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "ES2022",
     "module": "ES2022",
-    "lib": ["ES2022"],
+    "lib": ["ES2022", "DOM"],
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "allowSyntheticDefaultImports": true,
@@ -13,7 +13,8 @@
     "noEmit": true,
     "types": [
       "@cloudflare/workers-types",
-      "@types/node"
+      "@types/node",
+      "vitest/globals"
     ],
     "jsx": "react",
     "allowJs": true,
