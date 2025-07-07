@@ -30,6 +30,11 @@ preview_id = "d72ced350fb9428e91b17909b388ed83"
 # RECIPIENT_EMAIL - set via: wrangler secret put RECIPIENT_EMAIL
 # AI_WORKER_API_SECRET_KEY - ✓ set via Cloudflare dashboard
 
+# Service binding to AI worker - disabled, using workers.dev URL instead
+# [[services]]
+# binding = "AI_WORKER"
+# service = "ai-worker-api"
+
 # Rate limiting
 [[unsafe.bindings]]
 name = "RATE_LIMITER"

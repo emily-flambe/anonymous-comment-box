@@ -75,16 +75,48 @@ export default {
             });
           }
           
-          const aiClient = createAIClient(env);
-          const response = await aiClient.complete(message, {
-            temperature: 0.7,
-            max_tokens: 1000,
-            systemPrompt: 'You are a helpful AI assistant. Be concise but friendly in your responses.'
-          });
-          
-          return new Response(JSON.stringify({ response }), {
-            headers: { 'Content-Type': 'application/json', ...corsHeaders },
-          });
+          // Use workers.dev URL to avoid custom domain 522 issue
+          try {
+            const aiResponse = await fetch('https://ai-worker-api.emily-cogsdill.workers.dev/api/chat', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${env.AI_WORKER_API_SECRET_KEY}`,
+              },
+              body: JSON.stringify({
+                messages: [{ role: 'user', content: message }],
+                model: '@cf/meta/llama-3.1-8b-instruct',
+                temperature: 0.7,
+                max_tokens: 100
+              })
+            });
+            
+            if (!aiResponse.ok) {
+              return new Response(JSON.stringify({ 
+                error: `AI worker returned ${aiResponse.status}: ${aiResponse.statusText}`,
+                debug: `Response headers: ${JSON.stringify([...aiResponse.headers.entries()])}`
+              }), {
+                status: 500,
+                headers: { 'Content-Type': 'application/json', ...corsHeaders },
+              });
+            }
+            
+            const aiData = await aiResponse.json();
+            const reply = aiData.choices?.[0]?.message?.content || 'No response content';
+            
+            return new Response(JSON.stringify({ response: reply }), {
+              headers: { 'Content-Type': 'application/json', ...corsHeaders },
+            });
+          } catch (fetchError) {
+            console.error('Workers.dev fetch error:', fetchError);
+            return new Response(JSON.stringify({ 
+              error: `Workers.dev fetch error: ${fetchError instanceof Error ? fetchError.message : String(fetchError)}`,
+              debug: `Trying to reach ai-worker-api.emily-cogsdill.workers.dev`
+            }), {
+              status: 500,
+              headers: { 'Content-Type': 'application/json', ...corsHeaders },
+            });
+          }
         } catch (error) {
           console.error('Chat API error:', error);
           

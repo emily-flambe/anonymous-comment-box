@@ -57,7 +57,7 @@ export class AIClient {
   private readonly apiKey: string;
 
   constructor(env: Env) {
-    this.apiUrl = 'https://ai.emilycogsdill.com';
+    this.apiUrl = 'https://ai-worker-api.emily-cogsdill.workers.dev';
     this.apiKey = env.AI_WORKER_API_SECRET_KEY;
   }
 
@@ -68,6 +68,9 @@ export class AIClient {
     const url = `${this.apiUrl}/api/chat`;
     
     try {
+      console.log('Making request to AI worker:', url);
+      console.log('Request body:', JSON.stringify(request, null, 2));
+      
       const response = await fetch(url, {
         method: 'POST',
         headers: {
@@ -75,6 +78,8 @@ export class AIClient {
           'Authorization': `Bearer ${this.apiKey}`,
         },
         body: JSON.stringify(request),
+        // Add timeout to prevent hanging
+        signal: AbortSignal.timeout(30000), // 30 second timeout
       });
 
       if (!response.ok) {
