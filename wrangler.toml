@@ -45,3 +45,7 @@ simple = { limit = 10, period = 60 }
 [dev]
 port = 8787
 local_protocol = "http"
+
+# Enable observability
+[observability]
+enabled = true
