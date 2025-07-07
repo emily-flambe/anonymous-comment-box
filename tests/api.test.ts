@@ -15,6 +15,7 @@ describe('API Submission Handler', () => {
       } as any,
       RATE_LIMITER: {},
       ANTHROPIC_API_KEY: 'test-key',
+      AI_WORKER_API_SECRET_KEY: 'test-ai-worker-key',
       GMAIL_ACCESS_TOKEN: 'test-token',
       RECIPIENT_EMAIL: 'test@example.com',
       ENVIRONMENT: 'test',
