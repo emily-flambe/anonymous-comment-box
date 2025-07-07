@@ -28,7 +28,7 @@ preview_id = "d72ced350fb9428e91b17909b388ed83"
 # ANTHROPIC_API_KEY - set via: wrangler secret put ANTHROPIC_API_KEY
 # GMAIL_ACCESS_TOKEN - set via: wrangler secret put GMAIL_ACCESS_TOKEN  
 # RECIPIENT_EMAIL - set via: wrangler secret put RECIPIENT_EMAIL
-# AI_WORKER_API_SECRET_KEY - set via: wrangler secret put AI_WORKER_API_SECRET_KEY
+# AI_WORKER_API_SECRET_KEY - ✓ set via Cloudflare dashboard
 
 # Rate limiting
 [[unsafe.bindings]]

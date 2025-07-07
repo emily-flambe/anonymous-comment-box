@@ -128,9 +128,9 @@ export class AIClient {
 
     const request: ChatCompletionRequest = {
       messages,
-      temperature: options.temperature,
-      max_tokens: options.max_tokens,
-      model: options.model,
+      temperature: options.temperature ?? 0.7,
+      max_tokens: options.max_tokens ?? 1024,
+      model: options.model ?? '@cf/meta/llama-3.1-8b-instruct',
     };
 
     const response = await this.chatCompletion(request);
