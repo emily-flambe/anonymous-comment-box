@@ -39,7 +39,7 @@ Object.defineProperty(window, 'sessionStorage', {
 });
 
 // Mock console methods to avoid noise in tests
-global.console = {
+(global as any).console = {
   ...console,
   log: vi.fn(),
   warn: vi.fn(),

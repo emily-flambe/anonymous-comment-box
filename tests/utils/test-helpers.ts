@@ -169,7 +169,7 @@ export function createMockHTML() {
 // Simulate user interactions
 export const simulateUserInteraction = {
   selectPersona: (personaKey: string) => {
-    const select = document.getElementById('personaSelect') as HTMLSelectElement;
+    const select = document.getElementById('personaSelect') as unknown as HTMLSelectElement;
     select.value = personaKey;
     select.dispatchEvent(new Event('change', { bubbles: true }));
   },

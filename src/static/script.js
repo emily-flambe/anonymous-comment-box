@@ -188,7 +188,20 @@ async function generatePreview(message) {
 
 function displayPreview(data) {
     originalPreview.textContent = data.originalMessage;
-    transformedPreview.textContent = data.transformedMessage;
+    
+    // Show fallback warning if AI transformation failed
+    if (data.fallbackUsed || data.error) {
+        transformedPreview.innerHTML = `<div class="error-state">
+            ⚠️ AI transformation failed: ${data.error || 'Service temporarily unavailable'}
+            <br><br>
+            <strong>Original message shown below:</strong>
+            <br><br>
+            ${data.transformedMessage}
+        </div>`;
+    } else {
+        transformedPreview.textContent = data.transformedMessage;
+    }
+    
     previewContainer.classList.remove('hidden');
 }
 

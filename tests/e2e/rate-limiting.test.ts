@@ -70,7 +70,7 @@ class RateLimitingE2E {
         const newRemaining = Math.max(0, this.rateLimitMax - this.requestCount);
         
         if (url.includes('/api/preview')) {
-          const body = await new Request(url, options).json();
+          const body = await new Request(url, options).json() as any;
           return {
             ok: true,
             json: () => Promise.resolve({
@@ -117,7 +117,7 @@ class RateLimitingE2E {
     return this.getRequestResult();
   }
 
-  private getRequestResult() {
+  public getRequestResult() {
     const previewContainer = document.getElementById('messagePreview') as HTMLElement;
     const successMessage = document.getElementById('successMessage') as HTMLElement;
     const errorMessage = document.getElementById('errorMessage') as HTMLElement;
@@ -498,7 +498,7 @@ describe('Rate Limiting Enforcement E2E Tests', () => {
 
     it('should handle rate limit with custom persona workflows', async () => {
       // Add custom option
-      const personaSelect = document.getElementById('personaSelect') as HTMLSelectElement;
+      const personaSelect = document.getElementById('personaSelect') as unknown as HTMLSelectElement;
       const customOption = document.createElement('option');
       customOption.value = 'custom';
       customOption.textContent = 'Custom';
@@ -566,7 +566,7 @@ describe('Rate Limiting Enforcement E2E Tests', () => {
       
       // Form data should be preserved
       const messageTextarea = document.getElementById('message') as HTMLTextAreaElement;
-      const personaSelect = document.getElementById('personaSelect') as HTMLSelectElement;
+      const personaSelect = document.getElementById('personaSelect') as unknown as HTMLSelectElement;
       
       expect(messageTextarea.value).toBe(testMessage);
       expect(personaSelect.value).toBe(testPersona);

@@ -86,6 +86,10 @@ export class PersonaTransformer {
   private anthropic: Anthropic;
 
   constructor(env: Env) {
+    if (!env.ANTHROPIC_API_KEY) {
+      throw new AIPersonaTransformerError('ANTHROPIC_API_KEY not configured. In development, create a .dev.vars file with your API key.');
+    }
+    
     this.anthropic = new Anthropic({
       apiKey: env.ANTHROPIC_API_KEY,
     });
@@ -141,6 +145,11 @@ export class PersonaTransformer {
 
       // Handle AI service errors with fallback
       console.error('AI transformation failed:', error);
+      console.error('Error details:', {
+        name: error instanceof Error ? error.name : 'Unknown',
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
       
       return {
         transformedMessage: message,

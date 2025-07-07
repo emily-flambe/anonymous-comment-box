@@ -22,7 +22,7 @@ class MockAPIHandler {
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
     }
-    const sessionId = body.sessionId || 'default';
+    const sessionId = (body as any).sessionId || 'default';
     
     // Check rate limit
     const rateLimitResult = this.checkRateLimit(sessionId);
@@ -34,21 +34,21 @@ class MockAPIHandler {
     }
 
     // Validate request
-    if (!body.message || body.message.trim() === '') {
+    if (!(body as any).message || (body as any).message.trim() === '') {
       return new Response(
         JSON.stringify({ error: 'Message cannot be empty' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
-    if (body.message.length > 2000) {
+    if ((body as any).message.length > 2000) {
       return new Response(
         JSON.stringify({ error: 'Message too long (max 2000 characters)' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
-    if (body.customPersona && body.customPersona.length > 500) {
+    if ((body as any).customPersona && (body as any).customPersona.length > 500) {
       return new Response(
         JSON.stringify({ error: 'Custom persona description too long (max 500 characters)' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
@@ -56,7 +56,7 @@ class MockAPIHandler {
     }
 
     // Simulate AI transformation
-    const transformedMessage = this.transformMessage(body.message, body.persona, body.customPersona);
+    const transformedMessage = this.transformMessage((body as any).message, (body as any).persona, (body as any).customPersona);
     
     // Update rate limit
     this.updateRateLimit(sessionId);
@@ -64,8 +64,8 @@ class MockAPIHandler {
 
     const response = {
       transformedMessage,
-      originalMessage: body.message,
-      persona: body.persona || 'none',
+      originalMessage: (body as any).message,
+      persona: (body as any).persona || 'none',
       rateLimitRemaining: updatedRateLimit.remaining,
       rateLimitReset: updatedRateLimit.resetTime,
     };
@@ -86,7 +86,7 @@ class MockAPIHandler {
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
     }
-    const sessionId = body.sessionId || 'default';
+    const sessionId = (body as any).sessionId || 'default';
     
     // Check rate limit
     const rateLimitResult = this.checkRateLimit(sessionId);
@@ -98,14 +98,14 @@ class MockAPIHandler {
     }
 
     // Validate request
-    if (!body.message || body.message.trim() === '') {
+    if (!(body as any).message || (body as any).message.trim() === '') {
       return new Response(
         JSON.stringify({ error: 'Message cannot be empty' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
-    if (body.message.length > 2000) {
+    if ((body as any).message.length > 2000) {
       return new Response(
         JSON.stringify({ error: 'Message too long (max 2000 characters)' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
@@ -113,7 +113,7 @@ class MockAPIHandler {
     }
 
     // Simulate message processing and queuing
-    const transformedMessage = this.transformMessage(body.message, body.persona, body.customPersona);
+    const transformedMessage = this.transformMessage((body as any).message, (body as any).persona, (body as any).customPersona);
     
     // Update rate limit
     this.updateRateLimit(sessionId);
@@ -219,7 +219,7 @@ describe('API Integration Tests', () => {
   beforeEach(() => {
     apiHandler = new MockAPIHandler();
     mockFetch = vi.fn();
-    global.fetch = mockFetch;
+    (global.fetch as any) = mockFetch;
 
     // Setup mock fetch to route to our API handler
     mockFetch.mockImplementation(async (url: string, options?: any) => {
@@ -255,7 +255,7 @@ describe('API Integration Tests', () => {
         body: JSON.stringify(requestBody),
       });
 
-      const data = await response.json();
+      const data = await response.json() as any;
 
       expect(response.status).toBe(200);
       expect(data.originalMessage).toBe('Test message for preview');
@@ -279,7 +279,7 @@ describe('API Integration Tests', () => {
         body: JSON.stringify(requestBody),
       });
 
-      const data = await response.json();
+      const data = await response.json() as any;
 
       expect(response.status).toBe(200);
       expect(data.transformedMessage).toBe('[Make it sound like a pirate] Test message');
@@ -299,7 +299,7 @@ describe('API Integration Tests', () => {
         body: JSON.stringify(requestBody),
       });
 
-      const data = await response.json();
+      const data = await response.json() as any;
 
       expect(response.status).toBe(400);
       expect(data.error).toBe('Message too long (max 2000 characters)');
@@ -320,7 +320,7 @@ describe('API Integration Tests', () => {
         body: JSON.stringify(requestBody),
       });
 
-      const data = await response.json();
+      const data = await response.json() as any;
 
       expect(response.status).toBe(400);
       expect(data.error).toBe('Custom persona description too long (max 500 characters)');
@@ -339,7 +339,7 @@ describe('API Integration Tests', () => {
         body: JSON.stringify(requestBody),
       });
 
-      const data = await response.json();
+      const data = await response.json() as any;
 
       expect(response.status).toBe(400);
       expect(data.error).toBe('Message cannot be empty');
@@ -366,7 +366,7 @@ describe('API Integration Tests', () => {
           body: JSON.stringify(requestBody),
         });
 
-        const data = await response.json();
+        const data = await response.json() as any;
 
         expect(response.status).toBe(200);
         
@@ -397,7 +397,7 @@ describe('API Integration Tests', () => {
         body: JSON.stringify(requestBody),
       });
 
-      const data = await response.json();
+      const data = await response.json() as any;
 
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
@@ -420,7 +420,7 @@ describe('API Integration Tests', () => {
         body: JSON.stringify(requestBody),
       });
 
-      const data = await response.json();
+      const data = await response.json() as any;
 
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
@@ -441,7 +441,7 @@ describe('API Integration Tests', () => {
         body: JSON.stringify(requestBody),
       });
 
-      const data = await response.json();
+      const data = await response.json() as any;
 
       expect(response.status).toBe(400);
       expect(data.error).toBe('Message too long (max 2000 characters)');
@@ -460,7 +460,7 @@ describe('API Integration Tests', () => {
         body: JSON.stringify(requestBody),
       });
 
-      const data = await response.json();
+      const data = await response.json() as any;
 
       expect(response.status).toBe(400);
       expect(data.error).toBe('Message cannot be empty');
@@ -470,7 +470,7 @@ describe('API Integration Tests', () => {
   describe('Rate Limit Status API (/api/rate-limit-status)', () => {
     it('should return current rate limit status', async () => {
       const response = await fetch('/api/rate-limit-status?sessionId=test-session');
-      const data = await response.json();
+      const data = await response.json() as any;
 
       expect(response.status).toBe(200);
       expect(data.remaining).toBe(10);
@@ -491,7 +491,7 @@ describe('API Integration Tests', () => {
 
       // Then check rate limit status
       const response = await fetch('/api/rate-limit-status?sessionId=test-session');
-      const data = await response.json();
+      const data = await response.json() as any;
 
       expect(response.status).toBe(200);
       expect(data.remaining).toBe(9);
@@ -500,7 +500,7 @@ describe('API Integration Tests', () => {
 
     it('should handle missing session ID', async () => {
       const response = await fetch('/api/rate-limit-status');
-      const data = await response.json();
+      const data = await response.json() as any;
 
       expect(response.status).toBe(200);
       expect(data.remaining).toBe(10);
@@ -537,7 +537,7 @@ describe('API Integration Tests', () => {
       });
 
       expect(rateLimitedResponse.status).toBe(429);
-      const data = await rateLimitedResponse.json();
+      const data = await rateLimitedResponse.json() as any;
       expect(data.error).toContain('Rate limit exceeded');
     });
 
@@ -642,7 +642,7 @@ describe('API Integration Tests', () => {
       });
 
       expect(response.status).toBe(400);
-      const data = await response.json();
+      const data = await response.json() as any;
       expect(data.error).toBe('Invalid JSON in request body');
     });
 
@@ -667,7 +667,7 @@ describe('API Integration Tests', () => {
       });
 
       expect(response.status).toBe(400);
-      const data = await response.json();
+      const data = await response.json() as any;
       expect(data.error).toBe('Invalid JSON in request body');
     });
 
@@ -682,7 +682,7 @@ describe('API Integration Tests', () => {
       });
 
       expect(response.status).toBe(400);
-      const data = await response.json();
+      const data = await response.json() as any;
       expect(data.error).toBe('Message cannot be empty');
     });
 
@@ -697,7 +697,7 @@ describe('API Integration Tests', () => {
         }),
       });
 
-      const data = await response.json();
+      const data = await response.json() as any;
       expect(response.status).toBe(200);
       // Should fall back to no transformation
       expect(data.transformedMessage).toBe('Test message');
@@ -718,7 +718,7 @@ describe('API Integration Tests', () => {
         }),
       });
 
-      const data = await response.json();
+      const data = await response.json() as any;
       expect(data.originalMessage).toBe(originalMessage);
     });
 
@@ -733,7 +733,7 @@ describe('API Integration Tests', () => {
         }),
       });
 
-      const data = await response.json();
+      const data = await response.json() as any;
       expect(data.persona).toBe('extremely-serious');
     });
 
@@ -750,7 +750,7 @@ describe('API Integration Tests', () => {
         }),
       });
 
-      const data = await response.json();
+      const data = await response.json() as any;
       expect(response.status).toBe(200);
       expect(data.originalMessage).toBe(messageWithUnicode);
       expect(data.transformedMessage).toBe(messageWithUnicode);
@@ -769,7 +769,7 @@ describe('API Integration Tests', () => {
         }),
       });
 
-      const data = await response.json();
+      const data = await response.json() as any;
       expect(response.status).toBe(200);
       expect(data.originalMessage).toBe(longMessage);
     });
@@ -797,7 +797,7 @@ describe('API Integration Tests', () => {
       
       for (let i = 0; i < responses.length; i++) {
         expect(responses[i].status).toBe(200);
-        const data = await responses[i].json();
+        const data = await responses[i].json() as any;
         expect(data.originalMessage).toBe(`Concurrent message ${i}`);
       }
     });
@@ -826,7 +826,7 @@ describe('API Integration Tests', () => {
 
       // Rate limit should be properly tracked
       const statusResponse = await fetch(`/api/rate-limit-status?sessionId=${sessionId}`);
-      const statusData = await statusResponse.json();
+      const statusData = await statusResponse.json() as any;
       expect(statusData.remaining).toBe(5); // 10 - 5 = 5
     });
   });

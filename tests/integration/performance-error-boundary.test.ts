@@ -11,7 +11,7 @@ import {
 class PerformanceErrorTester {
   private performanceEntries: PerformanceEntry[] = [];
   private errorLog: Error[] = [];
-  private mockAPIs: ReturnType<typeof setupMockAPIs>;
+  public mockAPIs: ReturnType<typeof setupMockAPIs>;
 
   constructor() {
     this.mockAPIs = setupMockAPIs();
@@ -453,7 +453,7 @@ describe('Performance and Error Boundary Tests', () => {
       
       // Form state should be preserved
       const messageField = document.getElementById('message') as HTMLTextAreaElement;
-      const personaSelect = document.getElementById('personaSelect') as HTMLSelectElement;
+      const personaSelect = document.getElementById('personaSelect') as unknown as HTMLSelectElement;
       
       expect(messageField.value).toBe(testMessage);
       expect(personaSelect.value).toBe(testPersona);
@@ -589,7 +589,7 @@ describe('Performance and Error Boundary Tests', () => {
       if (reducedPerformanceMode) {
         // Add delays to simulate slow environment
         const originalTimeout = setTimeout;
-        global.setTimeout = (fn: any, delay: number) => originalTimeout(fn, delay * 2);
+        (global as any).setTimeout = (fn: any, delay: number) => originalTimeout(fn, delay * 2);
         
         const measurements = await perfTester.measureFormInteractionPerformance();
         

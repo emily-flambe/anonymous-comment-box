@@ -69,7 +69,7 @@ export default {
       }
 
       // Static assets and frontend
-      return handleStaticAssets(request, url);
+      return handleStaticAssets(request, url, env);
       
     } catch (error) {
       console.error('Worker error:', error);

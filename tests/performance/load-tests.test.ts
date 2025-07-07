@@ -161,22 +161,32 @@ describe('Performance and Load Tests', () => {
 
       // Mock rate limiter to track requests and enforce limit
       const { RateLimiter } = await import('../../src/lib/rate-limiter');
-      const mockRateLimiter = new RateLimiter();
+      const mockRateLimiter = vi.mocked(RateLimiter);
       
-      mockRateLimiter.checkLimit.mockImplementation(async () => {
-        rateLimitCount++;
-        if (rateLimitCount > 10) {
-          const error = new Error('Rate limit exceeded');
-          error.name = 'RateLimitError';
-          (error as any).resetTime = Date.now() + 60000;
-          throw error;
-        }
-        return {
-          remaining: 10 - rateLimitCount,
-          reset: Date.now() + 60000,
-          allowed: true
-        };
-      });
+      // Override the checkLimit method for this specific test
+      mockRateLimiter.mockImplementation(() => ({
+        generateKey: vi.fn().mockReturnValue('rate_limit:test:session'),
+        checkLimit: vi.fn().mockImplementation(async () => {
+          rateLimitCount++;
+          if (rateLimitCount > 10) {
+            const error = new Error('Rate limit exceeded');
+            error.name = 'RateLimitError';
+            (error as any).resetTime = Date.now() + 60000;
+            throw error;
+          }
+          return {
+            remaining: 10 - rateLimitCount,
+            reset: Date.now() + 60000,
+            limit: 10
+          };
+        }),
+        getStatus: vi.fn().mockResolvedValue({
+          remaining: 8,
+          reset: Date.now() + 45000,
+          limit: 10
+        }),
+        resetLimit: vi.fn().mockResolvedValue(undefined)
+      } as any));
 
       // Create 15 requests (5 over the limit)
       const requests = Array.from({ length: 15 }, (_, i) => {
@@ -239,17 +249,24 @@ describe('Performance and Load Tests', () => {
     it('should handle AI transformation delays', async () => {
       // Mock slower AI responses
       const { PersonaTransformer } = await import('../../src/lib/ai-persona-transformer');
-      const mockTransformer = new PersonaTransformer();
+      const mockTransformer = vi.mocked(PersonaTransformer);
       
-      mockTransformer.transformMessage.mockImplementation(async () => {
-        // Simulate AI processing delay
-        await new Promise(resolve => setTimeout(resolve, 100));
-        return {
-          transformedMessage: 'Delayed transformation result',
-          originalMessage: 'Original message',
-          persona: 'test'
-        };
-      });
+      mockTransformer.mockImplementation((env: any) => ({
+        transformMessage: vi.fn().mockImplementation(async () => {
+          // Simulate AI processing delay
+          await new Promise(resolve => setTimeout(resolve, 100));
+          return {
+            transformedMessage: 'Delayed transformation result',
+            originalMessage: 'Original message',
+            persona: 'test'
+          };
+        }),
+        anthropic: {} as any,
+        performTransformation: vi.fn(),
+        buildCustomPersonaPrompt: vi.fn(),
+        containsProblematicContent: vi.fn(),
+        sanitizeTransformation: vi.fn()
+      } as any));
 
       const requests = Array.from({ length: 10 }, (_, i) => {
         const request = new Request('http://localhost/api/preview', {
@@ -401,21 +418,28 @@ describe('Performance and Load Tests', () => {
       
       // Mock AI transformer to fail every 3rd request
       const { PersonaTransformer } = await import('../../src/lib/ai-persona-transformer');
-      const mockTransformer = new PersonaTransformer();
+      const mockTransformer = vi.mocked(PersonaTransformer);
       
-      mockTransformer.transformMessage.mockImplementation(async () => {
-        requestCount++;
-        if (requestCount % 3 === 0) {
-          const error = new Error('AI service temporarily unavailable');
-          error.name = 'PersonaTransformationError';
-          throw error;
-        }
-        return {
-          transformedMessage: 'Successful transformation',
-          originalMessage: 'Original message',
-          persona: 'test'
-        };
-      });
+      mockTransformer.mockImplementation((env: any) => ({
+        transformMessage: vi.fn().mockImplementation(async () => {
+          requestCount++;
+          if (requestCount % 3 === 0) {
+            const error = new Error('AI service temporarily unavailable');
+            error.name = 'PersonaTransformationError';
+            throw error;
+          }
+          return {
+            transformedMessage: 'Successful transformation',
+            originalMessage: 'Original message',
+            persona: 'test'
+          };
+        }),
+        anthropic: {} as any,
+        performTransformation: vi.fn(),
+        buildCustomPersonaPrompt: vi.fn(),
+        containsProblematicContent: vi.fn(),
+        sanitizeTransformation: vi.fn()
+      } as any));
 
       const requests = Array.from({ length: 15 }, (_, i) => {
         const request = new Request('http://localhost/api/preview', {
@@ -496,7 +520,7 @@ describe('Performance and Load Tests', () => {
       const measurements = [];
       for (let i = 0; i < 10; i++) {
         const startTime = Date.now();
-        const response = await handlePreview(singleRequest.clone(), mockEnv, mockCtx);
+        const response = await handlePreview(singleRequest.clone() as any, mockEnv, mockCtx);
         const endTime = Date.now();
         
         expect(response.status).toBe(200);

@@ -71,7 +71,7 @@ describe('API Endpoints', () => {
       });
 
       const response = await handleRateLimitStatus(request, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = await response.json() as any;
 
       expect(response.status).toBe(200);
       expect(data).toHaveProperty('remaining');

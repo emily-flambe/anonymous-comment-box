@@ -128,7 +128,7 @@ class AccessibilityTester {
     }
 
     // Check loading states
-    const previewBtn = document.getElementById('previewBtn');
+    const previewBtn = document.getElementById('previewBtn') as HTMLButtonElement | null;
     if (previewBtn?.disabled) {
       content.loading = previewBtn.textContent || '';
     }
@@ -229,16 +229,16 @@ class AccessibilityTester {
       messageField.dispatchEvent(new Event('input'));
 
       // Navigate to persona select
-      const personaSelect = document.getElementById('personaSelect') as HTMLSelectElement;
+      const personaSelect = document.getElementById('personaSelect') as unknown as HTMLSelectElement;
       personaSelect.focus();
       
-      if (document.activeElement !== personaSelect) {
+      if (document.activeElement !== (personaSelect as unknown as Element)) {
         return false;
       }
 
       // Select option using keyboard
-      personaSelect.value = 'super-nice';
-      personaSelect.dispatchEvent(new Event('change'));
+      (personaSelect as unknown as HTMLSelectElement).value = 'super-nice';
+      (personaSelect as unknown as HTMLSelectElement).dispatchEvent(new Event('change'));
 
       // Navigate to preview button
       const previewBtn = document.getElementById('previewBtn') as HTMLButtonElement;
@@ -329,7 +329,7 @@ describe('Accessibility Tests', () => {
 
     it('should handle custom persona input visibility in tab order', () => {
       // Add custom option
-      const personaSelect = document.getElementById('personaSelect') as HTMLSelectElement;
+      const personaSelect = document.getElementById('personaSelect') as unknown as HTMLSelectElement;
       const customOption = document.createElement('option');
       customOption.value = 'custom';
       customOption.textContent = 'Custom';
@@ -434,7 +434,7 @@ describe('Accessibility Tests', () => {
 
     it('should provide context for custom persona requirements', () => {
       // Add custom option
-      const personaSelect = document.getElementById('personaSelect') as HTMLSelectElement;
+      const personaSelect = document.getElementById('personaSelect') as unknown as HTMLSelectElement;
       const customOption = document.createElement('option');
       customOption.value = 'custom';
       customOption.textContent = 'Custom';
@@ -570,7 +570,7 @@ describe('Accessibility Tests', () => {
 
     it('should support custom persona workflow with keyboard', async () => {
       // Add custom option
-      const personaSelect = document.getElementById('personaSelect') as HTMLSelectElement;
+      const personaSelect = document.getElementById('personaSelect') as unknown as HTMLSelectElement;
       const customOption = document.createElement('option');
       customOption.value = 'custom';
       customOption.textContent = 'Custom';

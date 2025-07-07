@@ -55,7 +55,7 @@ export async function handleSubmission(
     let rateLimitResult;
     
     try {
-      rateLimitResult = await rateLimiter.checkLimit(env.MESSAGE_QUEUE, rateLimitKey);
+      rateLimitResult = await rateLimiter.checkLimit(rateLimitKey, env);
     } catch (error) {
       if (error instanceof RateLimitError) {
         const response: SubmitResponse = {

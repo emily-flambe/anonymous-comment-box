@@ -80,7 +80,7 @@ class MessageCustomizationE2E {
 
   getFormState() {
     const messageTextarea = document.getElementById('message') as HTMLTextAreaElement;
-    const personaSelect = document.getElementById('personaSelect') as HTMLSelectElement;
+    const personaSelect = document.getElementById('personaSelect') as unknown as HTMLSelectElement;
     const customPersonaTextarea = document.getElementById('customPersona') as HTMLTextAreaElement;
     const previewContainer = document.getElementById('messagePreview') as HTMLElement;
     const successMessage = document.getElementById('successMessage') as HTMLElement;
@@ -156,7 +156,7 @@ describe('Message Customization E2E Flow Tests', () => {
 
     it('should complete full preview flow with custom persona', async () => {
       // Add custom option to select
-      const personaSelect = document.getElementById('personaSelect') as HTMLSelectElement;
+      const personaSelect = document.getElementById('personaSelect') as unknown as HTMLSelectElement;
       const customOption = document.createElement('option');
       customOption.value = 'custom';
       customOption.textContent = 'Custom';
@@ -251,7 +251,7 @@ describe('Message Customization E2E Flow Tests', () => {
 
     it('should submit with custom persona after preview', async () => {
       // Add custom option
-      const personaSelect = document.getElementById('personaSelect') as HTMLSelectElement;
+      const personaSelect = document.getElementById('personaSelect') as unknown as HTMLSelectElement;
       const customOption = document.createElement('option');
       customOption.value = 'custom';
       customOption.textContent = 'Custom';
@@ -362,7 +362,7 @@ describe('Message Customization E2E Flow Tests', () => {
   describe('Custom Persona Workflows', () => {
     beforeEach(() => {
       // Add custom option to all tests in this group
-      const personaSelect = document.getElementById('personaSelect') as HTMLSelectElement;
+      const personaSelect = document.getElementById('personaSelect') as unknown as HTMLSelectElement;
       const customOption = document.createElement('option');
       customOption.value = 'custom';
       customOption.textContent = 'Custom';
@@ -594,7 +594,7 @@ describe('Message Customization E2E Flow Tests', () => {
   describe('Accessibility and User Experience', () => {
     it('should maintain proper focus flow through the form', async () => {
       const messageTextarea = document.getElementById('message') as HTMLTextAreaElement;
-      const personaSelect = document.getElementById('personaSelect') as HTMLSelectElement;
+      const personaSelect = document.getElementById('personaSelect') as unknown as HTMLSelectElement;
       const previewBtn = document.getElementById('previewBtn') as HTMLButtonElement;
       const submitBtn = document.getElementById('submitBtn') as HTMLButtonElement;
       

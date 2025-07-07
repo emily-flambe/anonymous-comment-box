@@ -45,6 +45,15 @@ export async function handlePreview(
         error: transformationResult.error
       };
 
+      // Log if transformation failed silently
+      if (transformationResult.fallbackUsed || transformationResult.error) {
+        console.warn('Transformation used fallback:', {
+          fallbackUsed: transformationResult.fallbackUsed,
+          error: transformationResult.error,
+          persona: transformationResult.persona
+        });
+      }
+
       return new Response(JSON.stringify(response), {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
