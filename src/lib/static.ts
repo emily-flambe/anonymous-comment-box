@@ -895,7 +895,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeRateLimit();
 });`;
 
-const testEmailHtml = \`<!DOCTYPE html>
+const testEmailContent = `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -915,29 +915,92 @@ const testEmailHtml = \`<!DOCTYPE html>
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
-        h1 { color: #333; margin-bottom: 30px; }
-        .form-group { margin-bottom: 20px; }
-        label { display: block; margin-bottom: 5px; color: #555; font-weight: 500; }
-        textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; resize: vertical; min-height: 100px; box-sizing: border-box; }
-        button { background-color: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; margin-right: 10px; }
-        button:hover { background-color: #0056b3; }
-        .debug-btn { background-color: #28a745; }
-        .debug-btn:hover { background-color: #1e7e34; }
-        .result { margin-top: 20px; padding: 15px; border-radius: 4px; white-space: pre-wrap; font-family: Monaco, monospace; font-size: 12px; }
-        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
-        .debug-section { margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; }
-        .debug-buttons { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 500;
+        }
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            resize: vertical;
+            min-height: 100px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .debug-btn {
+            background-color: #28a745;
+        }
+        .debug-btn:hover {
+            background-color: #1e7e34;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            font-family: Monaco, monospace;
+            font-size: 12px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .debug-section {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+        }
+        .debug-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>📧 Email Test Interface</h1>
+        
         <div class="form-group">
             <label for="message">Test Message:</label>
             <textarea id="message" placeholder="Enter your test message here...">Hello! This is a test email from the anonymous comment box system.</textarea>
         </div>
+        
         <button onclick="sendTestEmail()">Send Test Email</button>
+        
         <div class="debug-section">
             <h3>Debug Tools</h3>
             <div class="debug-buttons">
@@ -946,55 +1009,83 @@ const testEmailHtml = \`<!DOCTYPE html>
                 <button class="debug-btn" onclick="checkQueueStatus()">Check Queue Status</button>
             </div>
         </div>
+        
         <div id="result"></div>
     </div>
+
     <script>
         async function sendTestEmail() {
             const message = document.getElementById('message').value;
-            if (!message.trim()) { showResult('Please enter a message', 'error'); return; }
+            const resultDiv = document.getElementById('result');
+            
+            if (!message.trim()) {
+                showResult('Please enter a message', 'error');
+                return;
+            }
+            
             try {
                 showResult('Sending email...', 'success');
+                
                 const response = await fetch('/api/debug/send-test-email', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
                     body: JSON.stringify({ message: message })
                 });
+                
                 const data = await response.json();
+                
                 if (response.ok) {
-                    showResult(\\\`✅ Success!\\n\\\${JSON.stringify(data, null, 2)}\\\`, 'success');
+                    showResult(\`✅ Success!\\n\${JSON.stringify(data, null, 2)}\`, 'success');
                 } else {
-                    showResult(\\\`❌ Error!\\n\\\${JSON.stringify(data, null, 2)}\\\`, 'error');
+                    showResult(\`❌ Error!\\n\${JSON.stringify(data, null, 2)}\`, 'error');
                 }
             } catch (error) {
-                showResult(\\\`❌ Network Error!\\n\\\${error.message}\\\`, 'error');
+                showResult(\`❌ Network Error!\\n\${error.message}\`, 'error');
             }
         }
-        async function checkTokenStatus() { await makeDebugRequest('/api/debug/token-status', 'Token Status'); }
-        async function checkEmailStatus() { await makeDebugRequest('/api/debug/email-status', 'Email Status'); }
-        async function checkQueueStatus() { await makeDebugRequest('/api/debug/queue-status', 'Queue Status'); }
+        
+        async function checkTokenStatus() {
+            await makeDebugRequest('/api/debug/token-status', 'Token Status');
+        }
+        
+        async function checkEmailStatus() {
+            await makeDebugRequest('/api/debug/email-status', 'Email Status');
+        }
+        
+        async function checkQueueStatus() {
+            await makeDebugRequest('/api/debug/queue-status', 'Queue Status');
+        }
+        
         async function makeDebugRequest(endpoint, title) {
             try {
-                showResult(\\\`Checking \\\${title}...\\\`, 'success');
+                showResult(\`Checking \${title}...\`, 'success');
+                
                 const response = await fetch(endpoint);
                 const data = await response.json();
+                
                 if (response.ok) {
-                    showResult(\\\`✅ \\\${title}:\\n\\\${JSON.stringify(data, null, 2)}\\\`, 'success');
+                    showResult(\`✅ \${title}:\\n\${JSON.stringify(data, null, 2)}\`, 'success');
                 } else {
-                    showResult(\\\`❌ \\\${title} Error:\\n\\\${JSON.stringify(data, null, 2)}\\\`, 'error');
+                    showResult(\`❌ \${title} Error:\\n\${JSON.stringify(data, null, 2)}\`, 'error');
                 }
             } catch (error) {
-                showResult(\\\`❌ \\\${title} Network Error:\\n\\\${error.message}\\\`, 'error');
+                showResult(\`❌ \${title} Network Error:\\n\${error.message}\`, 'error');
             }
         }
+        
         function showResult(message, type) {
             const resultDiv = document.getElementById('result');
             resultDiv.textContent = message;
-            resultDiv.className = \\\`result \\\${type}\\\`;
+            resultDiv.className = \`result \${type}\`;
         }
+        
+        // Auto-focus the message textarea
         document.getElementById('message').focus();
     </script>
 </body>
-</html>\`;
+</html>`;
 
 export async function handleStaticAssets(request: Request, url: URL, env?: any): Promise<Response> {
   const path = staticFiles[url.pathname] || url.pathname;
@@ -1032,7 +1123,7 @@ export async function handleStaticAssets(request: Request, url: URL, env?: any):
     }
     
     if (path === '/test-email.html') {
-      return new Response(testEmailHtml, {
+      return new Response(testEmailContent, {
         headers: { 'Content-Type': 'text/html; charset=utf-8' },
       });
     }

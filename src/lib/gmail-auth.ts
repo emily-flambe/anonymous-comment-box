@@ -80,7 +80,10 @@ export class GmailAuth {
     ].join('\r\n');
     
     // Base64 encode the email (Gmail API requirement)
-    const encodedMessage = btoa(emailContent)
+    // Use TextEncoder to properly handle UTF-8 characters
+    const encoder = new TextEncoder();
+    const bytes = encoder.encode(emailContent);
+    const encodedMessage = btoa(String.fromCharCode(...bytes))
       .replace(/\+/g, '-')
       .replace(/\//g, '_')
       .replace(/=+$/, '');
