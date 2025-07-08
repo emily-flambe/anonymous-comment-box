@@ -1,5 +1,5 @@
 import { Env } from '../types/env';
-import Anthropic from '@anthropic-ai/sdk';
+import { createAIClient, AIClient, AIClientError } from './ai-client';
 
 export interface PersonaConfig {
   systemPrompt: string;
@@ -83,16 +83,14 @@ export class AIPersonaTransformerError extends Error {
 }
 
 export class PersonaTransformer {
-  private anthropic: Anthropic;
+  private aiClient: AIClient;
 
   constructor(env: Env) {
-    if (!env.ANTHROPIC_API_KEY) {
-      throw new AIPersonaTransformerError('ANTHROPIC_API_KEY not configured. In development, create a .dev.vars file with your API key.');
+    if (!env.AI_WORKER_API_SECRET_KEY) {
+      throw new AIPersonaTransformerError('AI_WORKER_API_SECRET_KEY not configured. In development, create a .dev.vars file with your API key.');
     }
     
-    this.anthropic = new Anthropic({
-      apiKey: env.ANTHROPIC_API_KEY,
-    });
+    this.aiClient = createAIClient(env);
   }
 
   /**
@@ -182,24 +180,25 @@ export class PersonaTransformer {
       throw new AIPersonaTransformerError(`Unknown persona: ${persona}`);
     }
 
-    const response = await this.anthropic.messages.create({
-      model: 'claude-3-haiku-20240307',
-      max_tokens: 500,
-      temperature,
-      system: systemPrompt,
-      messages: [
-        {
-          role: 'user',
-          content: message
-        }
-      ],
-    });
+    try {
+      const transformedMessage = await this.aiClient.complete(message, {
+        systemPrompt,
+        temperature,
+        max_tokens: 500,
+        model: '@cf/meta/llama-3.1-8b-instruct'
+      });
 
-    if (response.content[0].type !== 'text' || !response.content[0].text.trim()) {
-      throw new AIPersonaTransformerError('AI service returned empty response');
+      if (!transformedMessage || !transformedMessage.trim()) {
+        throw new AIPersonaTransformerError('AI service returned empty response');
+      }
+
+      return transformedMessage.trim();
+    } catch (error) {
+      if (error instanceof AIClientError) {
+        throw new AIPersonaTransformerError(`AI transformation failed: ${error.message}`, error);
+      }
+      throw error;
     }
-
-    return response.content[0].text.trim();
   }
 
   /**

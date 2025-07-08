@@ -20,11 +20,13 @@ describe('Queue Service', () => {
         delete: vi.fn(),
         list: vi.fn(),
       } as any,
-      ANTHROPIC_API_KEY: 'test-api-key',
       AI_WORKER_API_SECRET_KEY: 'test-ai-worker-key',
-      GMAIL_ACCESS_TOKEN: 'test-gmail-token',
+      GMAIL_CLIENT_ID: 'test-client-id',
+      GMAIL_CLIENT_SECRET: 'test-client-secret',
+      GMAIL_REFRESH_TOKEN: 'test-refresh-token',
       RECIPIENT_EMAIL: 'recipient@example.com',
       ENVIRONMENT: 'test',
+      QUEUE_DELAY_SECONDS: undefined,
       RATE_LIMITER: { limit: vi.fn().mockResolvedValue({ success: true }) } as any,
     };
 
@@ -105,14 +107,16 @@ describe('Queue Service', () => {
         .rejects.toThrow('Failed to send email: Network error');
     });
 
-    it('should handle missing Gmail token', async () => {
+    it('should handle missing Gmail credentials', async () => {
       const envWithoutToken = {
         ...mockEnv,
-        GMAIL_ACCESS_TOKEN: '',
+        GMAIL_CLIENT_ID: '',
+        GMAIL_CLIENT_SECRET: '',
+        GMAIL_REFRESH_TOKEN: '',
       };
 
       await expect(queueMessage('Test message', envWithoutToken, mockCtx, true))
-        .rejects.toThrow('Gmail access token not configured');
+        .rejects.toThrow('Gmail credentials not configured');
     });
 
     it('should handle missing recipient email', async () => {

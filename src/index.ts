@@ -4,6 +4,12 @@ import { handlePreview } from './api/preview';
 import { handleRateLimitStatus } from './api/rate-limit-status';
 import { handleStaticAssets } from './lib/static';
 import { createAIClient, AIClientError } from './lib/ai-client';
+import { 
+  handleDebugEmailStatus, 
+  handleDebugQueueStatus, 
+  handleDebugTokenStatus, 
+  handleDebugSendTestEmail 
+} from './api/debug';
 
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
@@ -94,14 +100,14 @@ export default {
             if (!aiResponse.ok) {
               return new Response(JSON.stringify({ 
                 error: `AI worker returned ${aiResponse.status}: ${aiResponse.statusText}`,
-                debug: `Response headers: ${JSON.stringify([...aiResponse.headers.entries()])}`
+                debug: `Response headers: ${JSON.stringify(Array.from(aiResponse.headers.entries()))}`
               }), {
                 status: 500,
                 headers: { 'Content-Type': 'application/json', ...corsHeaders },
               });
             }
             
-            const aiData = await aiResponse.json();
+            const aiData = await aiResponse.json() as any;
             const reply = aiData.choices?.[0]?.message?.content || 'No response content';
             
             return new Response(JSON.stringify({ response: reply }), {
@@ -137,6 +143,39 @@ export default {
         return new Response(JSON.stringify({ status: 'ok', timestamp: new Date().toISOString() }), {
           headers: { 'Content-Type': 'application/json', ...corsHeaders },
         });
+      }
+
+      // Debug endpoints
+      if (url.pathname === '/api/debug/email-status' && request.method === 'GET') {
+        const response = await handleDebugEmailStatus(request, env, ctx);
+        Object.entries(corsHeaders).forEach(([key, value]) => {
+          response.headers.set(key, value);
+        });
+        return response;
+      }
+
+      if (url.pathname === '/api/debug/queue-status' && request.method === 'GET') {
+        const response = await handleDebugQueueStatus(request, env, ctx);
+        Object.entries(corsHeaders).forEach(([key, value]) => {
+          response.headers.set(key, value);
+        });
+        return response;
+      }
+
+      if (url.pathname === '/api/debug/token-status' && request.method === 'GET') {
+        const response = await handleDebugTokenStatus(request, env, ctx);
+        Object.entries(corsHeaders).forEach(([key, value]) => {
+          response.headers.set(key, value);
+        });
+        return response;
+      }
+
+      if (url.pathname === '/api/debug/send-test-email' && request.method === 'POST') {
+        const response = await handleDebugSendTestEmail(request, env, ctx);
+        Object.entries(corsHeaders).forEach(([key, value]) => {
+          response.headers.set(key, value);
+        });
+        return response;
       }
 
       // AI test page

@@ -25,10 +25,11 @@ preview_id = "d72ced350fb9428e91b17909b388ed83"
 # class_name = "RateLimiter"
 
 # Environment variables (to be set in Cloudflare dashboard or wrangler secrets)
-# ANTHROPIC_API_KEY - set via: wrangler secret put ANTHROPIC_API_KEY
-# GMAIL_ACCESS_TOKEN - set via: wrangler secret put GMAIL_ACCESS_TOKEN  
-# RECIPIENT_EMAIL - set via: wrangler secret put RECIPIENT_EMAIL
 # AI_WORKER_API_SECRET_KEY - ✓ set via Cloudflare dashboard
+# GMAIL_CLIENT_ID - set via: wrangler secret put GMAIL_CLIENT_ID
+# GMAIL_CLIENT_SECRET - set via: wrangler secret put GMAIL_CLIENT_SECRET
+# GMAIL_REFRESH_TOKEN - set via: wrangler secret put GMAIL_REFRESH_TOKEN
+# RECIPIENT_EMAIL - set via: wrangler secret put RECIPIENT_EMAIL
 
 # Service binding to AI worker - disabled, using workers.dev URL instead
 # [[services]]

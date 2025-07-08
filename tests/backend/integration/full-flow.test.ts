@@ -2,16 +2,8 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import worker from '../../../src/index';
 import type { Env } from '../../../src/types/env';
 
-// Mock external services
-const mockAnthropic = {
-  messages: {
-    create: vi.fn(),
-  },
-};
-
-vi.mock('@anthropic-ai/sdk', () => ({
-  default: vi.fn(() => mockAnthropic),
-}));
+// Mock AI Worker service
+const mockFetch = vi.fn();
 
 global.fetch = vi.fn();
 
@@ -45,11 +37,13 @@ describe('Full Application Flow Integration Tests', () => {
         }),
         list: vi.fn(),
       } as any,
-      ANTHROPIC_API_KEY: 'test-api-key',
       AI_WORKER_API_SECRET_KEY: 'test-ai-worker-key',
-      GMAIL_ACCESS_TOKEN: 'test-gmail-token',
+      GMAIL_CLIENT_ID: 'test-client-id',
+      GMAIL_CLIENT_SECRET: 'test-client-secret',
+      GMAIL_REFRESH_TOKEN: 'test-refresh-token',
       RECIPIENT_EMAIL: 'recipient@example.com',
       ENVIRONMENT: 'test',
+      QUEUE_DELAY_SECONDS: undefined,
       RATE_LIMITER: { limit: vi.fn().mockResolvedValue({ success: true }) } as any,
     };
 
@@ -59,19 +53,12 @@ describe('Full Application Flow Integration Tests', () => {
     } as any;
 
     // Mock successful AI transformation
-    mockAnthropic.messages.create.mockResolvedValue({
-      content: [{
-        type: 'text',
-        text: 'This is a professionally transformed message.',
-      }],
-      usage: {
-        input_tokens: 50,
-        output_tokens: 25,
-      },
-    });
+    mockFetch.mockResolvedValue(new Response(JSON.stringify({
+      result: 'This is a professionally transformed message.'
+    })));
 
     // Mock successful Gmail API
-    vi.mocked(global.fetch).mockResolvedValue(new Response(JSON.stringify({
+    global.fetch = vi.fn().mockResolvedValue(new Response(JSON.stringify({
       id: 'message-id-123',
       threadId: 'thread-id-456',
     }), {
@@ -108,15 +95,17 @@ describe('Full Application Flow Integration Tests', () => {
       });
 
       // Should have called AI transformation
-      expect(mockAnthropic.messages.create).toHaveBeenCalledWith({
-        model: 'claude-3-haiku-20240307',
-        max_tokens: 1000,
-        temperature: 0.3,
-        messages: [{
-          role: 'user',
-          content: expect.stringContaining('constructive'),
-        }],
-      });
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('/ai'),
+        expect.objectContaining({
+          method: 'POST',
+          headers: expect.objectContaining({
+            'Authorization': 'Bearer test-ai-worker-key',
+            'Content-Type': 'application/json',
+          }),
+          body: expect.stringContaining('constructive'),
+        })
+      );
 
       // Should have attempted to send email
       expect(global.fetch).toHaveBeenCalledWith(
@@ -161,15 +150,17 @@ describe('Full Application Flow Integration Tests', () => {
       expect(response.status).toBe(200);
       
       // Should use legacy transformation
-      expect(mockAnthropic.messages.create).toHaveBeenCalledWith({
-        model: 'claude-3-haiku-20240307',
-        max_tokens: 1000,
-        temperature: 0,
-        messages: [{
-          role: 'user',
-          content: expect.stringContaining('Great feedback system!'),
-        }],
-      });
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('/ai'),
+        expect.objectContaining({
+          method: 'POST',
+          headers: expect.objectContaining({
+            'Authorization': 'Bearer test-ai-worker-key',
+            'Content-Type': 'application/json',
+          }),
+          body: expect.stringContaining('Great feedback system!'),
+        })
+      );
     });
 
     it('should handle rate limiting across multiple requests', async () => {
@@ -275,7 +266,7 @@ describe('Full Application Flow Integration Tests', () => {
 
   describe('Error Scenarios', () => {
     it('should handle AI service failure gracefully', async () => {
-      mockAnthropic.messages.create.mockRejectedValue(new Error('AI service down'));
+      mockFetch.mockRejectedValue(new Error('AI service down'));
 
       const request = new Request('http://localhost/api/submit', {
         method: 'POST',
@@ -415,7 +406,7 @@ describe('Full Application Flow Integration Tests', () => {
     it('should handle missing environment variables', async () => {
       const envMissingKey = {
         ...mockEnv,
-        ANTHROPIC_API_KEY: '',
+        AI_WORKER_API_SECRET_KEY: '',
       };
 
       const request = new Request('http://localhost/api/submit', {
