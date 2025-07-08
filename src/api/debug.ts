@@ -113,6 +113,7 @@ export async function handleDebugTokenStatus(
         GMAIL_REFRESH_TOKEN: !!env.GMAIL_REFRESH_TOKEN,
         RECIPIENT_EMAIL: !!env.RECIPIENT_EMAIL
       },
+      client_id_preview: env.GMAIL_CLIENT_ID ? env.GMAIL_CLIENT_ID.substring(0, 20) + '...' : 'NOT_SET',
       timestamp: new Date().toISOString()
     }), {
       headers: { 'Content-Type': 'application/json' },
@@ -128,6 +129,7 @@ export async function handleDebugTokenStatus(
         GMAIL_REFRESH_TOKEN: !!env.GMAIL_REFRESH_TOKEN,
         RECIPIENT_EMAIL: !!env.RECIPIENT_EMAIL
       },
+      client_id_preview: env.GMAIL_CLIENT_ID ? env.GMAIL_CLIENT_ID.substring(0, 20) + '...' : 'NOT_SET',
       timestamp: new Date().toISOString()
     }), {
       status: 500,

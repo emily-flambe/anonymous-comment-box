@@ -183,6 +183,11 @@ export default {
         return handleStaticAssets(request, url);
       }
 
+      // Email test page
+      if (url.pathname === '/test-email') {
+        return handleStaticAssets(request, url);
+      }
+
       // Static assets and frontend
       return handleStaticAssets(request, url, env);
       
