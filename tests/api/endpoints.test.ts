@@ -27,11 +27,13 @@ describe('API Endpoints', () => {
         getWithMetadata: vi.fn(),
       } as any,
       RATE_LIMITER: { limit: vi.fn().mockResolvedValue({ success: true }) },
-      ANTHROPIC_API_KEY: 'test-key',
       AI_WORKER_API_SECRET_KEY: 'test-ai-worker-key',
-      GMAIL_ACCESS_TOKEN: 'test-token',
+      GMAIL_CLIENT_ID: 'test-client-id',
+      GMAIL_CLIENT_SECRET: 'test-client-secret',
+      GMAIL_REFRESH_TOKEN: 'test-refresh-token',
       RECIPIENT_EMAIL: 'test@example.com',
       ENVIRONMENT: 'test',
+      QUEUE_DELAY_SECONDS: undefined,
     };
 
     mockCtx = {

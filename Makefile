@@ -105,12 +105,16 @@ secret-delete: ## Delete a secret (usage: make secret-delete SECRET=key)
 # Setup required secrets
 setup-secrets: ## Interactive setup of required secrets
 	@echo "🔐 Setting up required secrets..."
-	@echo "Setting ANTHROPIC_API_KEY..."
-	@wrangler secret put ANTHROPIC_API_KEY
+	@echo "Setting AI_WORKER_API_SECRET_KEY..."
+	@wrangler secret put AI_WORKER_API_SECRET_KEY
 	@echo "Setting RECIPIENT_EMAIL..."
 	@wrangler secret put RECIPIENT_EMAIL
-	@echo "Setting GMAIL_ACCESS_TOKEN..."
-	@wrangler secret put GMAIL_ACCESS_TOKEN
+	@echo "Setting GMAIL_CLIENT_ID..."
+	@wrangler secret put GMAIL_CLIENT_ID
+	@echo "Setting GMAIL_CLIENT_SECRET..."
+	@wrangler secret put GMAIL_CLIENT_SECRET
+	@echo "Setting GMAIL_REFRESH_TOKEN..."
+	@wrangler secret put GMAIL_REFRESH_TOKEN
 	@echo "✅ All secrets configured!"
 
 # KV Namespace Management

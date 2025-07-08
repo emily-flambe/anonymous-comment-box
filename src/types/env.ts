@@ -10,9 +10,11 @@ export interface Env {
   RATE_LIMITER: RateLimiter;
   
   // Environment variables
-  ANTHROPIC_API_KEY: string;
   AI_WORKER_API_SECRET_KEY: string;
-  GMAIL_ACCESS_TOKEN: string;
+  GMAIL_CLIENT_ID: string;
+  GMAIL_CLIENT_SECRET: string;
+  GMAIL_REFRESH_TOKEN: string;
   RECIPIENT_EMAIL: string;
   ENVIRONMENT: 'development' | 'production' | 'test';
+  QUEUE_DELAY_SECONDS?: string; // Optional for parameterized delays
 }

@@ -2,14 +2,9 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import worker from '../../src/index';
 import type { Env } from '../../src/types/env';
 
-// Mock dependencies
-vi.mock('@anthropic-ai/sdk', () => ({
-  default: vi.fn(() => ({
-    messages: {
-      create: vi.fn(),
-    },
-  })),
-}));
+// Mock fetch for AI Worker API
+const mockFetch = vi.fn();
+global.fetch = mockFetch;
 
 global.fetch = vi.fn();
 
@@ -28,11 +23,13 @@ describe('Environment Variable Handling', () => {
         delete: vi.fn(),
         list: vi.fn(),
       } as any,
-      ANTHROPIC_API_KEY: 'test-api-key',
       AI_WORKER_API_SECRET_KEY: 'test-ai-worker-key',
-      GMAIL_ACCESS_TOKEN: 'test-gmail-token',
+      GMAIL_CLIENT_ID: 'test-client-id',
+      GMAIL_CLIENT_SECRET: 'test-client-secret',
+      GMAIL_REFRESH_TOKEN: 'test-refresh-token',
       RECIPIENT_EMAIL: 'recipient@example.com',
       ENVIRONMENT: 'test',
+      QUEUE_DELAY_SECONDS: undefined,
       RATE_LIMITER: { limit: vi.fn().mockResolvedValue({ success: true }) } as any,
     };
 
@@ -43,10 +40,10 @@ describe('Environment Variable Handling', () => {
   });
 
   describe('Missing Environment Variables', () => {
-    it('should handle missing ANTHROPIC_API_KEY', async () => {
+    it('should handle missing AI_WORKER_API_SECRET_KEY', async () => {
       const envMissingKey = {
         ...baseEnv,
-        ANTHROPIC_API_KEY: '',
+        AI_WORKER_API_SECRET_KEY: '',
       };
 
       const request = new Request('http://localhost/api/submit', {
@@ -62,10 +59,12 @@ describe('Environment Variable Handling', () => {
       expect(data.error).toBe('Failed to process message');
     });
 
-    it('should handle missing GMAIL_ACCESS_TOKEN', async () => {
+    it('should handle missing Gmail credentials', async () => {
       const envMissingToken = {
         ...baseEnv,
-        GMAIL_ACCESS_TOKEN: '',
+        GMAIL_CLIENT_ID: '',
+        GMAIL_CLIENT_SECRET: '',
+        GMAIL_REFRESH_TOKEN: '',
       };
 
       const request = new Request('http://localhost/api/test-submit', {
@@ -100,10 +99,10 @@ describe('Environment Variable Handling', () => {
       expect(data.error).toBe('Failed to process message');
     });
 
-    it('should handle undefined ANTHROPIC_API_KEY', async () => {
+    it('should handle undefined AI_WORKER_API_SECRET_KEY', async () => {
       const envUndefinedKey = {
         ...baseEnv,
-        ANTHROPIC_API_KEY: undefined as any,
+        AI_WORKER_API_SECRET_KEY: undefined as any,
       };
 
       const request = new Request('http://localhost/api/preview', {
@@ -125,7 +124,7 @@ describe('Environment Variable Handling', () => {
     it('should handle whitespace-only environment variables', async () => {
       const envWhitespaceKey = {
         ...baseEnv,
-        ANTHROPIC_API_KEY: '   ',
+        AI_WORKER_API_SECRET_KEY: '   ',
       };
 
       const request = new Request('http://localhost/api/submit', {
@@ -144,17 +143,10 @@ describe('Environment Variable Handling', () => {
 
   describe('Environment Variable Validation', () => {
     it('should accept valid environment variables', async () => {
-      // Mock successful responses
-      const mockAnthropic = await import('@anthropic-ai/sdk');
-      const anthropicInstance = new mockAnthropic.default({ apiKey: 'test-key' });
-      vi.mocked(anthropicInstance.messages.create).mockResolvedValue({
-        content: [{ type: 'text', text: 'Transformed message', citations: [] }],
-        usage: { input_tokens: 10, output_tokens: 20, cache_creation_input_tokens: 0, cache_read_input_tokens: 0, server_tool_use: 0, service_tier: 'default' },
-      } as any);
-
-      vi.mocked(global.fetch).mockResolvedValue(new Response(JSON.stringify({
-        id: 'message-123',
-      }), { status: 200 }));
+      // Mock successful AI Worker response
+      mockFetch.mockResolvedValue(new Response(JSON.stringify({
+        result: 'Transformed message'
+      })));
 
       const request = new Request('http://localhost/api/test-submit', {
         method: 'POST',
@@ -297,16 +289,9 @@ describe('Environment Variable Handling', () => {
       ];
 
       // Mock successful API responses
-      const mockAnthropic = await import('@anthropic-ai/sdk');
-      const anthropicInstance = new mockAnthropic.default({ apiKey: 'test-key' });
-      vi.mocked(anthropicInstance.messages.create).mockResolvedValue({
-        content: [{ type: 'text', text: 'Transformed message', citations: [] }],
-        usage: { input_tokens: 10, output_tokens: 20, cache_creation_input_tokens: 0, cache_read_input_tokens: 0, server_tool_use: 0, service_tier: 'default' },
-      } as any);
-
-      vi.mocked(global.fetch).mockResolvedValue(new Response(JSON.stringify({
-        id: 'message-123',
-      }), { status: 200 }));
+      mockFetch.mockResolvedValue(new Response(JSON.stringify({
+        result: 'Transformed message'
+      })));
 
       for (const email of validEmails) {
         const envWithValidEmail = {
@@ -342,10 +327,14 @@ describe('Environment Variable Handling', () => {
       const responseText = await response.text();
       
       // Should not contain any sensitive information
-      expect(responseText).not.toContain('test-api-key');
-      expect(responseText).not.toContain('test-gmail-token');
-      expect(responseText).not.toContain('ANTHROPIC_API_KEY');
-      expect(responseText).not.toContain('GMAIL_ACCESS_TOKEN');
+      expect(responseText).not.toContain('test-ai-worker-key');
+      expect(responseText).not.toContain('test-client-id');
+      expect(responseText).not.toContain('test-client-secret');
+      expect(responseText).not.toContain('test-refresh-token');
+      expect(responseText).not.toContain('AI_WORKER_API_SECRET_KEY');
+      expect(responseText).not.toContain('GMAIL_CLIENT_ID');
+      expect(responseText).not.toContain('GMAIL_CLIENT_SECRET');
+      expect(responseText).not.toContain('GMAIL_REFRESH_TOKEN');
     });
 
     it('should not log sensitive environment variables', async () => {
@@ -353,7 +342,7 @@ describe('Environment Variable Handling', () => {
       
       const envMissingKey = {
         ...baseEnv,
-        ANTHROPIC_API_KEY: '',
+        AI_WORKER_API_SECRET_KEY: '',
       };
 
       const request = new Request('http://localhost/api/submit', {
@@ -366,7 +355,9 @@ describe('Environment Variable Handling', () => {
 
       // Check that no sensitive data was logged
       const logCalls = consoleSpy.mock.calls.flat().join(' ');
-      expect(logCalls).not.toContain('test-gmail-token');
+      expect(logCalls).not.toContain('test-client-id');
+      expect(logCalls).not.toContain('test-client-secret');
+      expect(logCalls).not.toContain('test-refresh-token');
       expect(logCalls).not.toContain('recipient@example.com');
       
       consoleSpy.mockRestore();
