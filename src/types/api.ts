@@ -54,7 +54,8 @@ export interface PersonaOption {
 // Common validation schemas
 export const ValidationLimits = {
   MESSAGE_MIN_LENGTH: 1,
-  MESSAGE_MAX_LENGTH: 2000,
+  MESSAGE_MAX_LENGTH: 2000, // Character limit for input validation
+  MESSAGE_MAX_WORDS: 1000, // Word limit for truncation
   CUSTOM_PERSONA_MAX_LENGTH: 500,
   RATE_LIMIT_MAX_REQUESTS: 10,
   RATE_LIMIT_WINDOW_MS: 60000, // 1 minute

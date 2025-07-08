@@ -1,5 +1,7 @@
 import { Env } from '../types/env';
+import { ValidationLimits } from '../types/api';
 import { createAIClient, AIClient, AIClientError } from './ai-client';
+import { truncateToWords, exceedsWordLimit } from './text-utils';
 
 export interface PersonaConfig {
   systemPrompt: string;
@@ -107,8 +109,8 @@ export class PersonaTransformer {
         throw new AIPersonaTransformerError('Invalid message provided');
       }
 
-      if (message.length > 2000) {
-        throw new AIPersonaTransformerError('Message too long (max 2000 characters)');
+      if (exceedsWordLimit(message, ValidationLimits.MESSAGE_MAX_WORDS)) {
+        throw new AIPersonaTransformerError(`Message too long (max ${ValidationLimits.MESSAGE_MAX_WORDS} words)`);
       }
 
       // Apply content filtering
@@ -251,9 +253,9 @@ Transform the user's message according to the persona description.`;
     }
 
     // Ensure transformation isn't too long
-    if (transformed.length > original.length * 2) {
-      console.warn('Transformation too long, truncating');
-      return transformed.substring(0, original.length * 2);
+    if (exceedsWordLimit(transformed, ValidationLimits.MESSAGE_MAX_WORDS)) {
+      console.warn(`Transformation exceeds ${ValidationLimits.MESSAGE_MAX_WORDS} words, truncating`);
+      return truncateToWords(transformed, ValidationLimits.MESSAGE_MAX_WORDS);
     }
 
     return transformed;
