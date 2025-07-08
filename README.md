@@ -28,20 +28,54 @@ A privacy-first web application for collecting completely anonymous feedback thr
    npm install
    ```
 
-2. **Setup Gmail API** (2 minutes)
+2. **Local Development** (Optional)
    ```bash
-   # Follow the guide in docs/setup/gmail-setup.md
-   wrangler secret put GMAIL_ACCESS_TOKEN
+   # Create .dev.vars file with your API keys
+   echo "AI_WORKER_API_SECRET_KEY=your_key_here" > .dev.vars
+   
+   # Start development server
+   make dev
+   # or: npm run dev
    ```
 
-3. **Deploy to Cloudflare**
+3. **Setup Gmail OAuth** (2 minutes)
+   ```bash
+   # Follow the guide in docs/setup/gmail-setup.md
+   wrangler secret put GMAIL_CLIENT_ID
+   wrangler secret put GMAIL_CLIENT_SECRET
+   wrangler secret put GMAIL_REFRESH_TOKEN
+   wrangler secret put RECIPIENT_EMAIL
+   ```
+
+4. **Deploy to Cloudflare**
    ```bash
    npm run deploy
    ```
 
-4. **Done!** Your anonymous feedback box is live at `your-app.workers.dev`
+5. **Done!** Your anonymous feedback box is live at `your-app.workers.dev`
 
 [**📖 Full Setup Guide →**](docs/setup/quickstart.md)
+
+## 🔧 Debug & Monitoring
+
+Built-in debug endpoints for system diagnostics:
+
+```bash
+# Check system health
+curl https://your-app.workers.dev/api/health
+
+# Verify Gmail OAuth status
+curl https://your-app.workers.dev/api/debug/token-status
+
+# Test email connectivity
+curl https://your-app.workers.dev/api/debug/email-status
+
+# Monitor queue status
+curl https://your-app.workers.dev/api/debug/queue-status
+
+# Send test email
+curl -X POST https://your-app.workers.dev/api/debug/send-test-email
+```
 
 ## 🏗️ How It Works
 
@@ -61,21 +95,19 @@ User Input → AI Transformation → Time-Blind Queue → Email Delivery
 
 ## 🎭 Available Personas
 
-- **Nervous Southerner**: "Well, I reckon this might could be better, if that's alright..."
-- **Excited Californian**: "Dude, this is totally rad but maybe we could optimize..."
-- **Formal Academic**: "The aforementioned implementation exhibits certain deficiencies..."
-- **Brooklyn Native**: "Listen, this thing's broken and you gotta fix it, capisce?"
-- **Midwest Polite**: "Oh, this is really great! Maybe just a tiny suggestion..."
-- **Tech Bro**: "We need to pivot this workflow to optimize our KPIs..."
-- **Zen Philosopher**: "In mindful consideration, this path may benefit from adjustment..."
-- **Pirate Captain**: "Arrr, this here contraption be needin' some work, savvy?"
+- **Internet Random**: "ngl this idea slaps 💯 we should def implement this fr fr"
+- **Barely Literate**: "i dont like this thing cuz it dont make sense to me and stuff"
+- **Extremely Serious**: "This matter requires immediate attention and systematic remediation..."
+- **Super Nice**: "I hope this feedback is helpful! Thank you for considering improvements! 😊"
+- **Custom Persona**: Define your own transformation style
+- **Legacy Random**: Classic personas including Professional, Casual, Academic, Technical, etc.
 
 ## 📁 Project Structure
 
 ```
 ├── src/
-│   ├── api/           # API endpoints (submit, queue processing)
-│   ├── lib/           # Core logic (AI transform, queue, email)
+│   ├── api/           # API endpoints (submit, debug, queue processing)
+│   ├── lib/           # Core logic (AI client, Gmail auth, queue)
 │   ├── static/        # Frontend (HTML, CSS, JS)
 │   └── types/         # TypeScript definitions
 ├── docs/              # Documentation
@@ -123,8 +155,8 @@ User Input → AI Transformation → Time-Blind Queue → Email Delivery
 
 - **Runtime**: Cloudflare Workers (Edge computing)
 - **Storage**: Cloudflare KV (Global key-value store)
-- **AI**: Anthropic Claude API (Message transformation)
-- **Email**: Gmail API (Zero-config email delivery)
+- **AI**: Custom AI Worker API (ai-worker-api.emily-cogsdill.workers.dev)
+- **Email**: Gmail API with OAuth (Secure, refresh-token based)
 - **Frontend**: Vanilla JavaScript (No framework overhead)
 - **Language**: TypeScript (Type safety)
 
@@ -148,8 +180,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🙏 Acknowledgments
 
 - [Cloudflare Workers](https://workers.cloudflare.com/) for the serverless platform
-- [Anthropic Claude](https://www.anthropic.com/) for AI-powered transformations
 - [Gmail API](https://developers.google.com/gmail/api) for reliable email delivery
+- Custom AI Worker infrastructure for secure message transformations
 
 ---
 
