@@ -28,7 +28,19 @@ export async function handlePreview(
       const rateLimitResult = await rateLimiter.checkLimit(rateLimitKey, env);
       
       // Transform message with persona
-      const personaTransformer = new PersonaTransformer(env);
+      let personaTransformer: PersonaTransformer;
+      try {
+        personaTransformer = new PersonaTransformer(env);
+      } catch (error) {
+        if (error instanceof AIPersonaTransformerError) {
+          return createErrorResponse(
+            `AI service configuration error: ${error.message}. This is likely a preview deployment issue - secrets may not be available.`,
+            503
+          );
+        }
+        throw error;
+      }
+      
       const transformationResult = await personaTransformer.transformMessage(
         message,
         persona || '',
