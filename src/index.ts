@@ -15,6 +15,17 @@ export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
     
+    // Debug logging at the very start
+    console.log('🚀 Worker Debug - Request received:', {
+      url: request.url,
+      pathname: url.pathname,
+      method: request.method,
+      hostname: url.hostname,
+      origin: url.origin
+    });
+    console.log('🚀 Worker Debug - Environment available:', !!env);
+    console.log('🚀 Worker Debug - Env keys:', Object.keys(env || {}));
+    
     // CORS headers for API responses
     const corsHeaders = {
       'Access-Control-Allow-Origin': '*',
@@ -24,12 +35,14 @@ export default {
 
     // Handle CORS preflight
     if (request.method === 'OPTIONS') {
+      console.log('🚀 Worker Debug - Handling OPTIONS request');
       return new Response(null, { headers: corsHeaders });
     }
 
     try {
       // API Routes
       if (url.pathname === '/api/submit' && request.method === 'POST') {
+        console.log('🚀 Worker Debug - Matched /api/submit route');
         const response = await handleSubmission(request, env, ctx);
         // Add CORS headers to the response
         Object.entries(corsHeaders).forEach(([key, value]) => {
@@ -40,6 +53,7 @@ export default {
 
       // Preview endpoint for message transformation
       if (url.pathname === '/api/preview' && request.method === 'POST') {
+        console.log('🚀 Worker Debug - Matched /api/preview route');
         const response = await handlePreview(request, env, ctx);
         // Add CORS headers to the response
         Object.entries(corsHeaders).forEach(([key, value]) => {
