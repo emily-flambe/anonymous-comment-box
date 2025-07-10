@@ -1,5 +1,5 @@
 import { Env } from '../types/env';
-import { transformMessage } from '../lib/ai-transform';
+// import { transformMessage } from '../lib/ai-transform'; // No longer needed - using PersonaTransformer for all transformations
 import { queueMessage } from '../lib/queue';
 import { SubmitRequest, SubmitResponse, ValidationLimits } from '../types/api';
 import { RateLimiter, RateLimitError } from '../lib/rate-limiter';
@@ -85,8 +85,16 @@ export async function handleSubmission(
         );
         transformedMessage = transformationResult.transformedMessage;
       } else {
-        // Fallback to existing transformation system
-        transformedMessage = await transformMessage(message, env);
+        // Fallback to existing transformation system with random persona
+        const personaTransformer = new PersonaTransformer(env);
+        const presetPersonas = ['internet-random', 'barely-literate', 'extremely-serious', 'super-nice'];
+        const randomPersona = presetPersonas[Math.floor(Math.random() * presetPersonas.length)];
+        const transformationResult = await personaTransformer.transformMessage(
+          message,
+          randomPersona,
+          undefined
+        );
+        transformedMessage = transformationResult.transformedMessage;
       }
     } catch (error) {
       console.error('AI transformation failed:', error);
