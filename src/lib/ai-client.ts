@@ -59,6 +59,9 @@ export class AIClient {
   constructor(env: Env) {
     this.apiUrl = 'https://ai-worker-api.emily-cogsdill.workers.dev';
     this.apiKey = env.AI_WORKER_API_SECRET_KEY;
+    console.log('🤖 AI Client Debug - Constructor - API URL:', this.apiUrl);
+    console.log('🤖 AI Client Debug - Constructor - API Key present:', !!this.apiKey);
+    console.log('🤖 AI Client Debug - Constructor - Environment keys:', Object.keys(env));
   }
 
   /**
@@ -68,8 +71,10 @@ export class AIClient {
     const url = `${this.apiUrl}/api/chat`;
     
     try {
-      console.log('Making request to AI worker:', url);
-      console.log('Request body:', JSON.stringify(request, null, 2));
+      console.log('🤖 AI Client Debug - Making request to:', url);
+      console.log('🤖 AI Client Debug - API Key present:', !!this.apiKey);
+      console.log('🤖 AI Client Debug - API Key length:', this.apiKey?.length || 0);
+      console.log('🤖 AI Client Debug - Request body:', JSON.stringify(request, null, 2));
       
       const response = await fetch(url, {
         method: 'POST',
@@ -82,20 +87,31 @@ export class AIClient {
         signal: AbortSignal.timeout(30000), // 30 second timeout
       });
 
+      console.log('🤖 AI Client Debug - Response status:', response.status);
+      console.log('🤖 AI Client Debug - Response headers:', Object.fromEntries(response.headers.entries()));
+
       if (!response.ok) {
+        console.log('🤖 AI Client Debug - Response not OK, handling error...');
         await this.handleApiError(response);
       }
 
       const data = await response.json() as ChatCompletionResponse;
+      console.log('🤖 AI Client Debug - Response data:', JSON.stringify(data, null, 2));
       return data;
     } catch (error) {
+      console.log('🤖 AI Client Debug - Caught error:', error);
+      console.log('🤖 AI Client Debug - Error type:', error instanceof Error ? error.constructor.name : typeof error);
+      
       if (error instanceof AIClientError) {
+        console.log('🤖 AI Client Debug - Re-throwing AIClientError');
         throw error;
       }
       
       // Handle network errors or other fetch errors
+      const errorMessage = `Failed to connect to AI worker API: ${error instanceof Error ? error.message : String(error)}`;
+      console.log('🤖 AI Client Debug - Creating new AIClientError:', errorMessage);
       throw new AIClientError(
-        `Failed to connect to AI worker API: ${error instanceof Error ? error.message : String(error)}`,
+        errorMessage,
         undefined,
         'connection_error',
         'network_error'
