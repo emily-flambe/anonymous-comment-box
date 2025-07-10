@@ -1,11 +1,19 @@
 # Development Environment Variables
-# Copy this file to .dev.vars and add your actual API keys
+# Copy this file to .dev.vars and fill in your actual values
 
-# Required for AI persona transformation
-ANTHROPIC_API_KEY=your-anthropic-api-key-here
+# AI Service Configuration
+AI_WORKER_API_SECRET_KEY=your_ai_worker_api_secret_key_here
 
-# Required for email functionality (if testing email features)
-RECIPIENT_EMAIL=your-recipient-email@example.com
-GMAIL_CLIENT_ID=your-gmail-client-id
-GMAIL_CLIENT_SECRET=your-gmail-client-secret  
-GMAIL_REFRESH_TOKEN=your-gmail-refresh-token
+# Gmail API Configuration
+GMAIL_CLIENT_ID=your_gmail_client_id_here
+GMAIL_CLIENT_SECRET=your_gmail_client_secret_here
+GMAIL_REFRESH_TOKEN=your_gmail_refresh_token_here
+
+# Email Configuration
+RECIPIENT_EMAIL=your-email@example.com
+
+# Application Environment
+ENVIRONMENT=development
+
+# Optional: Queue Processing Configuration
+# QUEUE_DELAY_SECONDS=3600
