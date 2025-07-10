@@ -117,7 +117,7 @@ export async function transformMessageWithPersona(
     return originalMessage;
   }
 
-  const systemMessage = `Transform messages according to specified style instructions. Output only the transformed message with no additional text, explanations, or commentary.
+  const systemInstructions = `Transform messages according to specified style instructions. Output only the transformed message with no additional text, explanations, or commentary.
 
 Rules:
 1. Preserve core message and intent completely
@@ -132,26 +132,12 @@ Style: ${systemPrompt}`;
   const userMessage = `Transform: ${originalMessage}`;
 
   try {
-    const response = await aiClient.chatCompletion({
-      messages: [
-        {
-          role: 'system',
-          content: systemMessage,
-        },
-        {
-          role: 'user',
-          content: userMessage,
-        },
-      ],
+    const transformedMessage = await aiClient.complete(userMessage, {
+      systemPrompt: systemInstructions,
+      temperature,
       max_tokens: 1000,
-      temperature: temperature,
     });
 
-    if (!response.choices || response.choices.length === 0) {
-      throw new Error('AI transformation returned no choices');
-    }
-
-    const transformedMessage = response.choices[0].message.content;
     if (!transformedMessage || !transformedMessage.trim()) {
       throw new Error('AI transformation returned empty or invalid response');
     }
@@ -174,7 +160,7 @@ export async function transformMessage(originalMessage: string, env: Env): Promi
   // Initialize AI client
   const aiClient = createAIClient(env);
 
-  const systemMessage = `Transform messages according to persona style. Output only the transformed message with no additional text, explanations, or commentary.
+  const systemInstructions = `Transform messages according to persona style. Output only the transformed message with no additional text, explanations, or commentary.
 
 Persona: ${persona.name}
 Style: ${persona.style}
@@ -189,26 +175,12 @@ Rules:
   const userMessage = `Transform: ${originalMessage}`;
 
   try {
-    const response = await aiClient.chatCompletion({
-      messages: [
-        {
-          role: 'system',
-          content: systemMessage,
-        },
-        {
-          role: 'user',
-          content: userMessage,
-        },
-      ],
-      max_tokens: 1000,
+    const transformedMessage = await aiClient.complete(userMessage, {
+      systemPrompt: systemInstructions,
       temperature: 0.7,
+      max_tokens: 1000,
     });
 
-    if (!response.choices || response.choices.length === 0) {
-      throw new Error('AI transformation returned no choices');
-    }
-
-    const transformedMessage = response.choices[0].message.content;
     if (!transformedMessage || !transformedMessage.trim()) {
       throw new Error('AI transformation returned empty or invalid response');
     }
