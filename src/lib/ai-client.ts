@@ -115,24 +115,19 @@ export class AIClient {
       systemPrompt?: string;
     } = {}
   ): Promise<string> {
-    const messages: ChatMessage[] = [];
-    
-    // Add system prompt if provided
+    // Combine system prompt and user message into single user message
+    let combinedMessage = message;
     if (options.systemPrompt) {
-      messages.push({
-        role: 'system',
-        content: options.systemPrompt,
-      });
+      combinedMessage = `${options.systemPrompt}\n\nUser input: ${message}`;
     }
-    
-    // Add user message
-    messages.push({
-      role: 'user',
-      content: message,
-    });
 
     const request: ChatCompletionRequest = {
-      messages,
+      messages: [
+        {
+          role: 'user',
+          content: combinedMessage,
+        },
+      ],
       temperature: options.temperature ?? 0.7,
       max_tokens: options.max_tokens ?? 1024,
       model: options.model ?? '@cf/meta/llama-3.1-8b-instruct',
