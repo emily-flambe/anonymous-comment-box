@@ -117,40 +117,27 @@ export async function transformMessageWithPersona(
     return originalMessage;
   }
 
-  const prompt = `You are a message transformation assistant. Your task is to rewrite the following message according to the specified style while preserving anonymity and maintaining the core meaning and intent.
+  const systemInstructions = `Transform messages according to specified style instructions. Output only the transformed message with no additional text, explanations, or commentary.
 
-Transformation Instructions: ${systemPrompt}
-
-Important rules:
-1. Preserve the core message and intent completely
-2. Change the writing style according to the instructions
+Rules:
+1. Preserve core message and intent completely
+2. Apply the specified style transformation
 3. Do not add or remove significant information
-4. Maintain the appropriate emotional tone (positive/negative/neutral)
-5. Keep the message length reasonably similar
-6. Ensure the transformed message sounds natural and authentic
+4. Maintain appropriate emotional tone
+5. Keep message length reasonably similar
+6. Ensure natural and authentic result
 
-Original message:
-"${originalMessage}"
+Style: ${systemPrompt}`;
 
-Rewrite the message according to the transformation instructions:`;
+  const userMessage = `Transform: ${originalMessage}`;
 
   try {
-    const response = await aiClient.chatCompletion({
-      messages: [
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ],
+    const transformedMessage = await aiClient.complete(userMessage, {
+      systemPrompt: systemInstructions,
+      temperature,
       max_tokens: 1000,
-      temperature: temperature,
     });
 
-    if (!response.choices || response.choices.length === 0) {
-      throw new Error('AI transformation returned no choices');
-    }
-
-    const transformedMessage = response.choices[0].message.content;
     if (!transformedMessage || !transformedMessage.trim()) {
       throw new Error('AI transformation returned empty or invalid response');
     }
@@ -173,40 +160,27 @@ export async function transformMessage(originalMessage: string, env: Env): Promi
   // Initialize AI client
   const aiClient = createAIClient(env);
 
-  const prompt = `You are a message transformation assistant. Your task is to rewrite the following message in a different style to preserve anonymity while maintaining the core meaning and intent.
+  const systemInstructions = `Transform messages according to persona style. Output only the transformed message with no additional text, explanations, or commentary.
 
 Persona: ${persona.name}
 Style: ${persona.style}
 
-Important rules:
-1. Preserve the core message and intent
-2. Change the writing style completely
+Rules:
+1. Preserve core message and intent
+2. Apply persona style completely
 3. Do not add or remove significant information
-4. Maintain appropriate tone (positive/negative/neutral)
-5. Keep the message length similar (within 20% of original)
+4. Maintain appropriate tone
+5. Keep message length similar`;
 
-Original message:
-"${originalMessage}"
-
-Rewrite the message in the specified style:`;
+  const userMessage = `Transform: ${originalMessage}`;
 
   try {
-    const response = await aiClient.chatCompletion({
-      messages: [
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ],
-      max_tokens: 1000,
+    const transformedMessage = await aiClient.complete(userMessage, {
+      systemPrompt: systemInstructions,
       temperature: 0.7,
+      max_tokens: 1000,
     });
 
-    if (!response.choices || response.choices.length === 0) {
-      throw new Error('AI transformation returned no choices');
-    }
-
-    const transformedMessage = response.choices[0].message.content;
     if (!transformedMessage || !transformedMessage.trim()) {
       throw new Error('AI transformation returned empty or invalid response');
     }

@@ -20,7 +20,7 @@ export interface TransformationResult {
 // Preset personas as specified in the PRD
 export const PRESET_PERSONAS: Record<string, PersonaConfig> = {
   'internet-random': {
-    systemPrompt: 'Transform the message to sound like casual internet slang with abbreviations, mild typos, and meme references. Keep the core message intact but make it sound like someone typing quickly online.',
+    systemPrompt: 'Transform to casual internet slang with abbreviations, mild typos, and meme references. Output only the transformed message with no additional text or commentary.',
     temperature: 0.8,
     examples: [
       {
@@ -34,7 +34,7 @@ export const PRESET_PERSONAS: Record<string, PersonaConfig> = {
     ]
   },
   'barely-literate': {
-    systemPrompt: 'Rewrite with poor grammar, simple vocabulary, and informal structure while preserving the original meaning. Use run-on sentences, missing punctuation, and basic words.',
+    systemPrompt: 'Transform to poor grammar, simple vocabulary, and informal structure. Use run-on sentences, missing punctuation, and basic words. Output only the transformed message with no additional text or commentary.',
     temperature: 0.7,
     examples: [
       {
@@ -48,7 +48,7 @@ export const PRESET_PERSONAS: Record<string, PersonaConfig> = {
     ]
   },
   'extremely-serious': {
-    systemPrompt: 'Transform to formal, academic language with professional vocabulary and structure. Use complex sentence structures, formal tone, and precise terminology.',
+    systemPrompt: 'Transform to formal, academic language with professional vocabulary and structure. Use complex sentence structures, formal tone, and precise terminology. Output only the transformed message with no additional text or commentary.',
     temperature: 0.3,
     examples: [
       {
@@ -62,7 +62,7 @@ export const PRESET_PERSONAS: Record<string, PersonaConfig> = {
     ]
   },
   'super-nice': {
-    systemPrompt: 'Rewrite with overly polite, encouraging, and positive language while maintaining the core message. Add pleasantries, expressions of gratitude, and positive framing.',
+    systemPrompt: 'Transform to overly polite, encouraging, and positive language. Add pleasantries, expressions of gratitude, and positive framing. Output only the transformed message with no additional text or commentary.',
     temperature: 0.6,
     examples: [
       {
@@ -216,16 +216,14 @@ export class PersonaTransformer {
       throw new AIPersonaTransformerError('Custom persona contains inappropriate content');
     }
 
-    return `Transform the message according to this persona description: "${customPersona}". 
+    return `Transform messages using this persona: "${customPersona}". Output only the transformed message with no additional text, explanations, or commentary.
 
-Important rules:
-1. Preserve the core message and intent
-2. Apply the persona style consistently
+Rules:
+1. Preserve core message and intent
+2. Apply persona style consistently
 3. Do not add or remove significant information
 4. Maintain appropriate tone
-5. Keep the message length reasonable
-
-Transform the user's message according to the persona description.`;
+5. Keep message length reasonable`;
   }
 
   /**

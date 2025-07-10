@@ -1,5 +1,5 @@
 import { Env } from '../types/env';
-import { transformMessage } from '../lib/ai-transform';
+// import { transformMessage } from '../lib/ai-transform'; // No longer needed - using PersonaTransformer for all transformations
 import { queueMessage } from '../lib/queue';
 import { SubmitRequest, SubmitResponse, ValidationLimits } from '../types/api';
 import { RateLimiter, RateLimitError } from '../lib/rate-limiter';
@@ -75,9 +75,25 @@ export async function handleSubmission(
     // Transform message with AI (using new persona system if specified, fallback to old system)
     let transformedMessage: string;
     try {
+      // Check if AI service is configured
+      let personaTransformer: PersonaTransformer;
+      try {
+        personaTransformer = new PersonaTransformer(env);
+      } catch (error) {
+        if (error instanceof AIPersonaTransformerError) {
+          return new Response(JSON.stringify({ 
+            success: false,
+            error: `AI service configuration error: ${error.message}. This is likely a preview deployment issue - secrets may not be available.`
+          }), {
+            status: 503,
+            headers: { 'Content-Type': 'application/json' },
+          });
+        }
+        throw error;
+      }
+      
       if (persona || customPersona) {
         // Use new persona transformer
-        const personaTransformer = new PersonaTransformer(env);
         const transformationResult = await personaTransformer.transformMessage(
           message,
           persona || '',
@@ -85,8 +101,15 @@ export async function handleSubmission(
         );
         transformedMessage = transformationResult.transformedMessage;
       } else {
-        // Fallback to existing transformation system
-        transformedMessage = await transformMessage(message, env);
+        // Fallback to existing transformation system with random persona
+        const presetPersonas = ['internet-random', 'barely-literate', 'extremely-serious', 'super-nice'];
+        const randomPersona = presetPersonas[Math.floor(Math.random() * presetPersonas.length)];
+        const transformationResult = await personaTransformer.transformMessage(
+          message,
+          randomPersona,
+          undefined
+        );
+        transformedMessage = transformationResult.transformedMessage;
       }
     } catch (error) {
       console.error('AI transformation failed:', error);
