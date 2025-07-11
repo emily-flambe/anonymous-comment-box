@@ -29,10 +29,8 @@ export async function queueMessage(
       // Use custom delay (in seconds)
       scheduledFor = Date.now() + (customDelaySeconds * 1000);
     } else {
-      // Random delay between 1-6 hours (in milliseconds)
-      const minDelay = 60 * 60 * 1000; // 1 hour
-      const maxDelay = 6 * 60 * 60 * 1000; // 6 hours
-      const randomDelay = Math.floor(Math.random() * (maxDelay - minDelay + 1)) + minDelay;
+      // Environment-specific random delays
+      const randomDelay = getRandomDelayForEnvironment(env.ENVIRONMENT);
       scheduledFor = Date.now() + randomDelay;
     }
   }
@@ -92,5 +90,30 @@ async function sendEmail(message: string, env: Env): Promise<void> {
   } catch (error) {
     console.error('Failed to send email:', error);
     throw error;
+  }
+}
+
+function getRandomDelayForEnvironment(environment: string): number {
+  switch (environment) {
+    case 'development': {
+      // Random delay between 0-10 minutes (in milliseconds)
+      const minDevDelay = 0;
+      const maxDevDelay = 10 * 60 * 1000; // 10 minutes
+      return Math.floor(Math.random() * (maxDevDelay - minDevDelay + 1)) + minDevDelay;
+    }
+    
+    case 'production': {
+      // Random delay between 1-6 hours (in milliseconds)
+      const minProdDelay = 60 * 60 * 1000; // 1 hour
+      const maxProdDelay = 6 * 60 * 60 * 1000; // 6 hours
+      return Math.floor(Math.random() * (maxProdDelay - minProdDelay + 1)) + minProdDelay;
+    }
+    
+    default: {
+      // Default to production behavior for unknown environments
+      const minDefaultDelay = 60 * 60 * 1000; // 1 hour
+      const maxDefaultDelay = 6 * 60 * 60 * 1000; // 6 hours
+      return Math.floor(Math.random() * (maxDefaultDelay - minDefaultDelay + 1)) + minDefaultDelay;
+    }
   }
 }

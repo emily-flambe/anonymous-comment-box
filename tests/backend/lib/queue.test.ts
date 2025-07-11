@@ -313,15 +313,58 @@ describe('Queue Service', () => {
       vi.restoreAllMocks();
     });
 
-    it('should calculate random delay correctly', async () => {
+    it('should use immediate delivery in test mode', async () => {
+      await queueMessage('Test message', mockEnv, mockCtx, true);
+
+      // Should send immediately, not use waitUntil for scheduling
+      expect(global.fetch).toHaveBeenCalled();
+      expect(mockCtx.waitUntil).not.toHaveBeenCalled();
+    });
+
+    it('should use 0-10 minute delay in development environment', async () => {
+      const devEnv = { ...mockEnv, ENVIRONMENT: 'development' as const };
+      await queueMessage('Test message', devEnv, mockCtx, false);
+
+      // Should queue for delayed delivery
+      expect(global.fetch).not.toHaveBeenCalled();
+      expect(mockCtx.waitUntil).toHaveBeenCalledWith(expect.any(Promise));
+    });
+
+    it('should use 1-6 hour delay in production environment', async () => {
+      const prodEnv = { ...mockEnv, ENVIRONMENT: 'production' as const };
+      await queueMessage('Test message', prodEnv, mockCtx, false);
+
+      // Should queue for delayed delivery
+      expect(global.fetch).not.toHaveBeenCalled();
+      expect(mockCtx.waitUntil).toHaveBeenCalledWith(expect.any(Promise));
+    });
+
+    it('should use custom delay when QUEUE_DELAY_SECONDS is set', async () => {
+      const customDelayEnv = { ...mockEnv, QUEUE_DELAY_SECONDS: '300' }; // 5 minutes
+      await queueMessage('Test message', customDelayEnv, mockCtx, false);
+
+      // Should queue for delayed delivery
+      expect(global.fetch).not.toHaveBeenCalled();
+      expect(mockCtx.waitUntil).toHaveBeenCalledWith(expect.any(Promise));
+    });
+
+    it('should default to production delay for unknown environments', async () => {
+      const unknownEnv = { ...mockEnv, ENVIRONMENT: 'staging' as any };
+      await queueMessage('Test message', unknownEnv, mockCtx, false);
+
+      // Should queue for delayed delivery
+      expect(global.fetch).not.toHaveBeenCalled();
+      expect(mockCtx.waitUntil).toHaveBeenCalledWith(expect.any(Promise));
+    });
+
+    it('should store message in KV with proper TTL', async () => {
       await queueMessage('Test message', mockEnv, mockCtx, false);
 
-      // With Math.random() = 0.5, delay should be 15 minutes (900000ms)
-      expect(mockCtx.waitUntil).toHaveBeenCalledWith(expect.any(Promise));
-      
-      // The promise should resolve after the delay
-      const delayPromise = (mockCtx.waitUntil as any).mock.calls[0][0];
-      expect(delayPromise).toBeInstanceOf(Promise);
+      expect(mockEnv.MESSAGE_QUEUE.put).toHaveBeenCalledWith(
+        expect.stringMatching(/^msg_/),
+        expect.any(String),
+        { expirationTtl: 24 * 60 * 60 }
+      );
     });
   });
 });
