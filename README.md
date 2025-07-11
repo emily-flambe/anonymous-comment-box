@@ -54,6 +54,8 @@ A privacy-first web application for collecting completely anonymous feedback thr
 
 5. **Done!** Your anonymous feedback box is live at `your-app.workers.dev`
 
+> **⚠️ Important**: AI transformation and email functionality do not work in the Cloudflare preview environment. These features only work in local development or production deployments.
+
 [**📖 Full Setup Guide →**](docs/setup/quickstart.md)
 
 ## 🔧 Debug & Monitoring
