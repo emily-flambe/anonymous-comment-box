@@ -15,6 +15,7 @@ export interface PreviewResponse {
   rateLimitReset: number;    // Unix timestamp
   fallbackUsed?: boolean;
   error?: string;
+  emailPreview?: string;     // Full email format preview including headers
 }
 
 export interface RateLimitStatus {

@@ -47,6 +47,9 @@ export async function handlePreview(
         customPersona
       );
 
+      // Format the email preview to match actual email format
+      const emailPreview = formatEmailPreview(transformationResult.transformedMessage, env);
+      
       const response: PreviewResponse = {
         transformedMessage: transformationResult.transformedMessage,
         originalMessage: transformationResult.originalMessage,
@@ -54,7 +57,8 @@ export async function handlePreview(
         rateLimitRemaining: rateLimitResult.remaining,
         rateLimitReset: rateLimitResult.reset,
         fallbackUsed: transformationResult.fallbackUsed,
-        error: transformationResult.error
+        error: transformationResult.error,
+        emailPreview: emailPreview
       };
 
       // Log if transformation failed silently
@@ -137,6 +141,19 @@ function validatePreviewRequest(body: any): { error: string; status: number } | 
   }
 
   return null;
+}
+
+function formatEmailPreview(message: string, env: Env): string {
+  // Format the email preview to match the actual email format sent via Gmail
+  const emailContent = [
+    `To: ${env.RECIPIENT_EMAIL}`,
+    `Subject: Anonymous Feedback`,
+    `Content-Type: text/plain; charset=utf-8`,
+    ``,
+    message
+  ].join('\r\n');
+  
+  return emailContent;
 }
 
 function createErrorResponse(message: string, status: number, additionalData?: any): Response {

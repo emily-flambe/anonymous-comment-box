@@ -64,10 +64,18 @@ async function scheduleMessageDelivery(
   const delay = scheduledFor - Date.now();
   
   if (delay > 0) {
-    // Wait for the scheduled time
-    await new Promise(resolve => setTimeout(resolve, delay));
+    // For Cloudflare Workers, setTimeout doesn't work reliably for long delays
+    // Instead, we rely on external scheduled workers or cron jobs to process queued messages
+    // For now, log that the message is scheduled and return - scheduled worker will handle it
+    console.log(`Message ${messageId} scheduled for delivery in ${Math.round(delay / 1000 / 60)} minutes`);
+    return;
   }
   
+  // If delay is 0 or negative, send immediately
+  await processQueuedMessage(messageId, env);
+}
+
+async function processQueuedMessage(messageId: string, env: Env): Promise<void> {
   // Retrieve and send the message
   const key = `msg_${messageId}`;
   const messageData = await env.MESSAGE_QUEUE.get(key);
@@ -80,6 +88,8 @@ async function scheduleMessageDelivery(
     
     // Delete from queue
     await env.MESSAGE_QUEUE.delete(key);
+    
+    console.log(`Message ${messageId} sent and removed from queue`);
   }
 }
 
@@ -116,4 +126,46 @@ function getRandomDelayForEnvironment(environment: string): number {
       return Math.floor(Math.random() * (maxDefaultDelay - minDefaultDelay + 1)) + minDefaultDelay;
     }
   }
+}
+
+// Function to process all queued messages that are ready to be sent
+export async function processQueuedMessages(env: Env): Promise<{processed: number, errors: string[]}> {
+  const currentTime = Date.now();
+  const result = {processed: 0, errors: [] as string[]};
+  
+  try {
+    // List all queued messages
+    const messagesList = await env.MESSAGE_QUEUE.list({ prefix: 'msg_' });
+    
+    for (const key of messagesList.keys) {
+      try {
+        const messageData = await env.MESSAGE_QUEUE.get(key.name);
+        if (messageData) {
+          const queuedMessage: QueuedMessage = JSON.parse(messageData);
+          
+          // Check if the message is ready to be sent
+          if (queuedMessage.scheduledFor <= currentTime) {
+            // Send the message
+            await sendEmail(queuedMessage.message, env);
+            
+            // Delete from queue
+            await env.MESSAGE_QUEUE.delete(key.name);
+            
+            result.processed++;
+            console.log(`Processed queued message ${queuedMessage.id}`);
+          }
+        }
+      } catch (error) {
+        const errorMsg = `Error processing message ${key.name}: ${error instanceof Error ? error.message : String(error)}`;
+        result.errors.push(errorMsg);
+        console.error(errorMsg);
+      }
+    }
+  } catch (error) {
+    const errorMsg = `Error listing queued messages: ${error instanceof Error ? error.message : String(error)}`;
+    result.errors.push(errorMsg);
+    console.error(errorMsg);
+  }
+  
+  return result;
 }
