@@ -87,7 +87,7 @@ const htmlContent = `<!DOCTYPE html>
                                 <div class="preview-text" id="originalPreview"></div>
                             </div>
                             <div class="preview-transformed">
-                                <h4>Transformed Message</h4>
+                                <h4>Email Preview</h4>
                                 <div class="preview-text" id="transformedPreview"></div>
                             </div>
                         </div>
@@ -735,7 +735,13 @@ function displayPreview(data) {
             \${data.transformedMessage}
         </div>\`;
     } else {
-        transformedPreview.textContent = data.transformedMessage;
+        // Display the full email format including headers if available
+        if (data.emailPreview) {
+            transformedPreview.textContent = data.emailPreview;
+        } else {
+            // Fallback to just the transformed message if emailPreview is not available
+            transformedPreview.textContent = data.transformedMessage;
+        }
     }
     
     previewContainer.classList.remove('hidden');

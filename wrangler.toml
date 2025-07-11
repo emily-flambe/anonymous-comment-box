@@ -55,3 +55,7 @@ local_protocol = "http"
 # Enable observability
 [observability]
 enabled = true
+
+# Scheduled worker to process queued messages
+[triggers]
+crons = ["*/10 * * * *"]  # Run every 10 minutes

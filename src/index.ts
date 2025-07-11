@@ -10,6 +10,7 @@ import {
   handleDebugTokenStatus, 
   handleDebugSendTestEmail 
 } from './api/debug';
+import { handleProcessQueue } from './api/process-queue';
 
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
@@ -192,6 +193,15 @@ export default {
         return response;
       }
 
+      // Process queue endpoint (for scheduled worker)
+      if (url.pathname === '/api/process-queue' && request.method === 'POST') {
+        const response = await handleProcessQueue(request, env, ctx);
+        Object.entries(corsHeaders).forEach(([key, value]) => {
+          response.headers.set(key, value);
+        });
+        return response;
+      }
+
       // AI test page
       if (url.pathname === '/ai-test') {
         return handleStaticAssets(request, url);
@@ -211,6 +221,24 @@ export default {
         status: 500,
         headers: { 'Content-Type': 'application/json', ...corsHeaders },
       });
+    }
+  },
+
+  // Scheduled worker for processing queued messages
+  async scheduled(event: any, env: Env, ctx: ExecutionContext): Promise<void> {
+    console.log('Scheduled worker triggered:', event.cron);
+    
+    try {
+      const result = await handleProcessQueue(
+        new Request('http://localhost/api/process-queue', { method: 'POST' }),
+        env,
+        ctx
+      );
+      
+      const data = await result.json();
+      console.log('Scheduled queue processing result:', data);
+    } catch (error) {
+      console.error('Scheduled worker error:', error);
     }
   },
 };
