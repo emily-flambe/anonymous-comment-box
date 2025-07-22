@@ -3,7 +3,7 @@ import { handleSubmission } from './api/submit';
 import { handlePreview } from './api/preview';
 import { handleRateLimitStatus } from './api/rate-limit-status';
 import { handleStaticAssets } from './lib/static';
-import { createAIClient, AIClientError } from './lib/ai-client';
+import { AIClientError } from './lib/ai-client';
 import { 
   handleDebugEmailStatus, 
   handleDebugQueueStatus, 
@@ -96,9 +96,9 @@ export default {
             });
           }
           
-          // Use workers.dev URL to avoid custom domain 522 issue
+          // Use the new AI API URL
           try {
-            const aiResponse = await fetch('https://ai-worker-api.emily-cogsdill.workers.dev/api/chat', {
+            const aiResponse = await fetch('https://ai.emilycogsdill.com/api/chat', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
@@ -132,7 +132,7 @@ export default {
             console.error('Workers.dev fetch error:', fetchError);
             return new Response(JSON.stringify({ 
               error: `Workers.dev fetch error: ${fetchError instanceof Error ? fetchError.message : String(fetchError)}`,
-              debug: `Trying to reach ai-worker-api.emily-cogsdill.workers.dev`
+              debug: `Trying to reach ai.emilycogsdill.com`
             }), {
               status: 500,
               headers: { 'Content-Type': 'application/json', ...corsHeaders },
