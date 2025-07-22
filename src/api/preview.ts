@@ -144,16 +144,8 @@ function validatePreviewRequest(body: any): { error: string; status: number } | 
 }
 
 function formatEmailPreview(message: string, env: Env): string {
-  // Format the email preview to match the actual email format sent via Gmail
-  const emailContent = [
-    `To: ${env.RECIPIENT_EMAIL}`,
-    `Subject: Anonymous Feedback`,
-    `Content-Type: text/plain; charset=utf-8`,
-    ``,
-    message
-  ].join('\r\n');
-  
-  return emailContent;
+  // Return only the transformed message content for preview
+  return message;
 }
 
 function createErrorResponse(message: string, status: number, additionalData?: any): Response {
