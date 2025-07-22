@@ -57,7 +57,7 @@ export class AIClient {
   private readonly apiKey: string;
 
   constructor(env: Env) {
-    this.apiUrl = 'https://ai-worker-api.emily-cogsdill.workers.dev';
+    this.apiUrl = 'https://ai.emilycogsdill.com';
     this.apiKey = env.AI_WORKER_API_SECRET_KEY;
     console.log('🤖 AI Client Debug - Constructor - API URL:', this.apiUrl);
     console.log('🤖 AI Client Debug - Constructor - API Key present:', !!this.apiKey);
@@ -129,9 +129,20 @@ export class AIClient {
       max_tokens?: number;
       model?: string;
       systemPrompt?: string;
+      useSimpleEndpoint?: boolean;
     } = {}
   ): Promise<string> {
-    // Combine system prompt and user message into single user message
+    // For simple use cases, use the simpler /api/v1/chat endpoint
+    if (options.useSimpleEndpoint !== false && options.systemPrompt && !options.model) {
+      try {
+        return await this.simpleChat(message, options.systemPrompt);
+      } catch (error) {
+        console.log('🤖 AI Client Debug - Simple chat failed, falling back to full endpoint:', error);
+        // Fall through to use the full chat completion endpoint
+      }
+    }
+
+    // Combine system prompt and user message into single user message for full endpoint
     let combinedMessage = message;
     if (options.systemPrompt) {
       combinedMessage = `${options.systemPrompt}\n\nUser input: ${message}`;
@@ -181,6 +192,23 @@ export class AIClient {
     let errorCode = 'http_error';
     let errorType = 'api_error';
 
+    // Handle specific error cases
+    if (response.status === 401) {
+      errorMessage = 'Authentication failed. Please check your API key.';
+      errorCode = 'invalid_api_key';
+      errorType = 'authentication_error';
+    } else if (response.status === 429) {
+      errorMessage = 'Rate limit exceeded. Please try again later.';
+      errorCode = 'rate_limit_exceeded';
+      errorType = 'rate_limit_error';
+      
+      // Check for Retry-After header
+      const retryAfter = response.headers.get('Retry-After');
+      if (retryAfter) {
+        errorMessage += ` Retry after ${retryAfter} seconds.`;
+      }
+    }
+
     try {
       const errorData = await response.json() as ApiError;
       if (errorData.error) {
@@ -196,14 +224,66 @@ export class AIClient {
   }
 
   /**
+   * Simple chat endpoint for basic completions
+   */
+  async simpleChat(message: string, systemPrompt?: string): Promise<string> {
+    const url = `${this.apiUrl}/api/v1/chat`;
+    
+    try {
+      console.log('🤖 AI Client Debug - Simple chat request to:', url);
+      
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.apiKey}`,
+        },
+        body: JSON.stringify({
+          message,
+          systemPrompt,
+        }),
+        signal: AbortSignal.timeout(30000), // 30 second timeout
+      });
+
+      console.log('🤖 AI Client Debug - Simple chat response status:', response.status);
+
+      if (!response.ok) {
+        await this.handleApiError(response);
+      }
+
+      const data = await response.json() as { response: string; error?: string };
+      
+      if (data.error) {
+        throw new AIClientError(
+          data.error,
+          response.status,
+          'simple_chat_error',
+          'api_error'
+        );
+      }
+
+      return data.response;
+    } catch (error) {
+      if (error instanceof AIClientError) {
+        throw error;
+      }
+      
+      const errorMessage = `Failed to connect to AI worker API: ${error instanceof Error ? error.message : String(error)}`;
+      throw new AIClientError(
+        errorMessage,
+        undefined,
+        'connection_error',
+        'network_error'
+      );
+    }
+  }
+
+  /**
    * Health check method to verify API connectivity
    */
   async healthCheck(): Promise<boolean> {
     try {
-      const response = await this.complete('Hello', {
-        max_tokens: 10,
-        temperature: 0,
-      });
+      const response = await this.simpleChat('Hello', 'Respond with a simple greeting.');
       return response.length > 0;
     } catch (error) {
       console.error('AI client health check failed:', error);
