@@ -199,13 +199,8 @@ function displayPreview(data) {
             ${data.transformedMessage}
         </div>`;
     } else {
-        // Display the full email format including headers if available
-        if (data.emailPreview) {
-            transformedPreview.textContent = data.emailPreview;
-        } else {
-            // Fallback to just the transformed message if emailPreview is not available
-            transformedPreview.textContent = data.transformedMessage;
-        }
+        // Display the transformed message
+        transformedPreview.textContent = data.transformedMessage;
     }
     
     previewContainer.classList.remove('hidden');
@@ -280,7 +275,7 @@ feedbackForm.addEventListener('submit', async (e) => {
     } finally {
         // Re-enable form
         submitBtn.disabled = false;
-        submitBtn.textContent = 'Send Anonymous Feedback';
+        submitBtn.textContent = 'Send Anonymous Message';
         messageTextarea.disabled = false;
     }
 });
