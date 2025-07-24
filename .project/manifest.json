@@ -1,0 +1,27 @@
+{
+  "version": "1.0.0",
+  "name": "Anonymous Comment Box",
+  "description": "A privacy-first web application for collecting completely anonymous feedback through AI-powered message transformation and time-blind queuing",
+  "type": "web-application",
+  "tech_stack": [
+    "TypeScript",
+    "Cloudflare Workers",
+    "Cloudflare AI",
+    "Gmail API",
+    "Vitest"
+  ],
+  "primary_language": "TypeScript",
+  "domains": [
+    "web-development",
+    "privacy",
+    "security",
+    "ai",
+    "serverless"
+  ],
+  "status": "active",
+  "created": "2024-01-01",
+  "updated": "2025-01-24",
+  "author": "Flambé",
+  "license": "MIT",
+  "repository": "https://github.com/emily-flambe/anonymous-comment-box"
+}
