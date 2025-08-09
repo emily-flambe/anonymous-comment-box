@@ -7,22 +7,13 @@ routes = [
   "anon.emilycogsdill.com/*"
 ]
 
-[env.production]
-vars = { ENVIRONMENT = "production" }
 
-[env.development]
-vars = { ENVIRONMENT = "development" }
-
-# KV Namespaces for message queue and rate limiting
+# KV Namespace for message queue
 [[kv_namespaces]]
 binding = "MESSAGE_QUEUE"
 id = "f8a0c5236b7044fbbd3ccda02c9001a0"
 preview_id = "d72ced350fb9428e91b17909b388ed83"
 
-[[kv_namespaces]]
-binding = "RATE_LIMIT"
-id = "rate-limit-namespace-id-placeholder"
-preview_id = "rate-limit-preview-namespace-id-placeholder"
 
 # Durable Objects (if needed for future features)
 # [[durable_objects.bindings]]
