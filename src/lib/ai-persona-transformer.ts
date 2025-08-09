@@ -186,8 +186,7 @@ export class PersonaTransformer {
       const transformedMessage = await this.aiClient.complete(message, {
         systemPrompt,
         temperature,
-        max_tokens: 500,
-        model: '@cf/meta/llama-3.1-8b-instruct'
+        max_tokens: 500
       });
 
       if (!transformedMessage || !transformedMessage.trim()) {

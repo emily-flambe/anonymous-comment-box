@@ -11,6 +11,9 @@ help: ## Show this help message
 # Development
 dev: ## Start development server with hot reload
 	@echo "🚀 Starting development server..."
+	@-pkill -f "wrangler" 2>/dev/null || true
+	@-lsof -ti:8888 | xargs kill -9 2>/dev/null || true
+	@sleep 1
 	npm run dev
 
 preview: ## Preview locally (same as dev)
