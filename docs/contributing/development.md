@@ -44,7 +44,7 @@ npm run typecheck
 npm run lint
 ```
 
-Your development server will be available at `http://localhost:8787`
+Your development server will be available at `http://localhost:8789`
 
 ## 📁 Project Structure
 
@@ -189,7 +189,7 @@ describe('Worker Integration', () => {
   });
 
   test('serves homepage', async () => {
-    const response = await worker.fetch('http://localhost:8787/');
+    const response = await worker.fetch('http://localhost:8789/');
     expect(response.status).toBe(200);
     
     const content = await response.text();
@@ -202,15 +202,15 @@ describe('Worker Integration', () => {
 
 ```bash
 # Test submission endpoint
-curl -X POST http://localhost:8787/api/submit \
+curl -X POST http://localhost:8789/api/submit \
   -H "Content-Type: application/json" \
   -d '{"message": "Test feedback message"}'
 
 # Test static serving
-curl http://localhost:8787/
+curl http://localhost:8789/
 
 # Test with invalid data
-curl -X POST http://localhost:8787/api/submit \
+curl -X POST http://localhost:8789/api/submit \
   -H "Content-Type: application/json" \
   -d '{"message": ""}'
 ```

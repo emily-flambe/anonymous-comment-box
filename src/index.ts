@@ -96,43 +96,95 @@ export default {
             });
           }
           
-          // Use the new AI API URL
+          // Use the correct AI worker API endpoint (matching chat-bgd project)
           try {
-            const aiResponse = await fetch('https://ai.emilycogsdill.com/api/chat', {
+            console.log('🤖 Making request to AI worker with message:', message);
+            const aiResponse = await fetch('https://ai-worker.emily-cogsdill.workers.dev/api/v1/chat', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${env.AI_WORKER_API_SECRET_KEY}`,
+                'User-Agent': 'Anonymous-Comment-Box/1.0',
               },
               body: JSON.stringify({
-                messages: [{ role: 'user', content: message }],
-                model: '@cf/meta/llama-3.1-8b-instruct',
-                temperature: 0.7,
-                max_tokens: 100
+                input: message
               })
             });
             
+            console.log('🤖 AI worker response status:', aiResponse.status);
+            console.log('🤖 AI worker response headers:', Object.fromEntries(aiResponse.headers.entries()));
+            
             if (!aiResponse.ok) {
-              return new Response(JSON.stringify({ 
-                error: `AI worker returned ${aiResponse.status}: ${aiResponse.statusText}`,
-                debug: `Response headers: ${JSON.stringify(Array.from(aiResponse.headers.entries()))}`
-              }), {
-                status: 500,
+              const errorText = await aiResponse.text();
+              console.error('🤖 AI worker error response:', errorText);
+              
+              let errorMessage = 'AI service temporarily unavailable';
+              if (aiResponse.status === 429) {
+                errorMessage = 'Too many requests. Please wait a moment.';
+              } else if (aiResponse.status >= 500) {
+                errorMessage = 'AI service error. Please try again later.';
+              }
+              
+              return new Response(JSON.stringify({ error: errorMessage }), {
+                status: aiResponse.status === 429 ? 429 : 500,
                 headers: { 'Content-Type': 'application/json', ...corsHeaders },
               });
             }
             
             const aiData = await aiResponse.json() as any;
-            const reply = aiData.choices?.[0]?.message?.content || 'No response content';
+            console.log('🤖 AI worker response data:', aiData);
             
-            return new Response(JSON.stringify({ response: reply }), {
+            // Extract response text from the complex structure
+            let responseText = 'No response received';
+            let reasoningText = null;
+            
+            if (aiData.output && Array.isArray(aiData.output)) {
+              console.log('🤖 Found output array with', aiData.output.length, 'items');
+              
+              // Look for the assistant message in the output array
+              const assistantMessage = aiData.output.find((item: any) => 
+                item.type === 'message' && item.role === 'assistant'
+              );
+              
+              if (assistantMessage && assistantMessage.content && Array.isArray(assistantMessage.content)) {
+                console.log('🤖 Assistant content array has', assistantMessage.content.length, 'items');
+                
+                // Extract the main text response
+                const textContent = assistantMessage.content.find((content: any) => content.type === 'output_text');
+                if (textContent && textContent.text) {
+                  responseText = textContent.text;
+                  console.log('🤖 Extracted response text:', responseText);
+                }
+              }
+              
+              // Extract reasoning if present
+              const reasoningObject = aiData.output.find((item: any) => item.type === 'reasoning');
+              if (reasoningObject && reasoningObject.content && Array.isArray(reasoningObject.content)) {
+                const reasoningContent = reasoningObject.content.find((content: any) => content.type === 'reasoning_text');
+                if (reasoningContent && reasoningContent.text) {
+                  reasoningText = reasoningContent.text;
+                  console.log('🤖 Extracted reasoning text:', reasoningText);
+                }
+              }
+            }
+            
+            // Also check for reasoning in the top-level object
+            if (aiData.reasoning && typeof aiData.reasoning === 'object') {
+              reasoningText = JSON.stringify(aiData.reasoning, null, 2);
+            }
+            
+            console.log('🤖 Final response text:', responseText);
+            console.log('🤖 Final reasoning:', reasoningText);
+            
+            return new Response(JSON.stringify({ 
+              response: responseText,
+              reasoning: reasoningText
+            }), {
               headers: { 'Content-Type': 'application/json', ...corsHeaders },
             });
           } catch (fetchError) {
-            console.error('Workers.dev fetch error:', fetchError);
+            console.error('🤖 AI worker fetch error:', fetchError);
             return new Response(JSON.stringify({ 
-              error: `Workers.dev fetch error: ${fetchError instanceof Error ? fetchError.message : String(fetchError)}`,
-              debug: `Trying to reach ai.emilycogsdill.com`
+              error: `Failed to connect to AI service: ${fetchError instanceof Error ? fetchError.message : String(fetchError)}`
             }), {
               status: 500,
               headers: { 'Content-Type': 'application/json', ...corsHeaders },

@@ -57,7 +57,7 @@ export class AIClient {
   private readonly apiKey: string;
 
   constructor(env: Env) {
-    this.apiUrl = 'https://ai.emilycogsdill.com';
+    this.apiUrl = 'https://ai-worker.emily-cogsdill.workers.dev';
     this.apiKey = env.AI_WORKER_API_SECRET_KEY;
     console.log('🤖 AI Client Debug - Constructor - API URL:', this.apiUrl);
     console.log('🤖 AI Client Debug - Constructor - API Key present:', !!this.apiKey);
@@ -66,56 +66,50 @@ export class AIClient {
 
   /**
    * Make a chat completion request to the AI worker API
+   * NOTE: This method converts to the simplified v1/chat endpoint format
    */
   async chatCompletion(request: ChatCompletionRequest): Promise<ChatCompletionResponse> {
-    const url = `${this.apiUrl}/api/chat`;
+    console.log('🤖 AI Client Debug - Converting ChatCompletionRequest to v1/chat format');
+    
+    // Extract the user message from the messages array
+    const userMessage = request.messages.find(msg => msg.role === 'user')?.content || '';
+    const systemMessage = request.messages.find(msg => msg.role === 'system')?.content;
+    
+    let input = userMessage;
+    if (systemMessage) {
+      input = `${systemMessage}\n\nUser input: ${userMessage}`;
+    }
     
     try {
-      console.log('🤖 AI Client Debug - Making request to:', url);
-      console.log('🤖 AI Client Debug - API Key present:', !!this.apiKey);
-      console.log('🤖 AI Client Debug - API Key length:', this.apiKey?.length || 0);
-      console.log('🤖 AI Client Debug - Request body:', JSON.stringify(request, null, 2));
+      // Use the simpleChat method which already handles the v1/chat endpoint
+      const responseText = await this.simpleChat(input);
       
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.apiKey}`,
-        },
-        body: JSON.stringify(request),
-        // Add timeout to prevent hanging
-        signal: AbortSignal.timeout(30000), // 30 second timeout
-      });
-
-      console.log('🤖 AI Client Debug - Response status:', response.status);
-      console.log('🤖 AI Client Debug - Response headers:', Object.fromEntries(response.headers.entries()));
-
-      if (!response.ok) {
-        console.log('🤖 AI Client Debug - Response not OK, handling error...');
-        await this.handleApiError(response);
-      }
-
-      const data = await response.json() as ChatCompletionResponse;
-      console.log('🤖 AI Client Debug - Response data:', JSON.stringify(data, null, 2));
-      return data;
+      // Convert the simple response back to ChatCompletionResponse format
+      const response: ChatCompletionResponse = {
+        id: `chatcmpl-${Date.now()}`,
+        object: 'chat.completion',
+        created: Math.floor(Date.now() / 1000),
+        model: 'ai-worker', // Let AI worker handle model selection
+        choices: [{
+          index: 0,
+          message: {
+            role: 'assistant',
+            content: responseText
+          },
+          finish_reason: 'stop'
+        }],
+        usage: {
+          prompt_tokens: input.length, // Rough estimate
+          completion_tokens: responseText.length, // Rough estimate
+          total_tokens: input.length + responseText.length
+        }
+      };
+      
+      console.log('🤖 AI Client Debug - Converted response:', JSON.stringify(response, null, 2));
+      return response;
     } catch (error) {
-      console.log('🤖 AI Client Debug - Caught error:', error);
-      console.log('🤖 AI Client Debug - Error type:', error instanceof Error ? error.constructor.name : typeof error);
-      
-      if (error instanceof AIClientError) {
-        console.log('🤖 AI Client Debug - Re-throwing AIClientError');
-        throw error;
-      }
-      
-      // Handle network errors or other fetch errors
-      const errorMessage = `Failed to connect to AI worker API: ${error instanceof Error ? error.message : String(error)}`;
-      console.log('🤖 AI Client Debug - Creating new AIClientError:', errorMessage);
-      throw new AIClientError(
-        errorMessage,
-        undefined,
-        'connection_error',
-        'network_error'
-      );
+      console.log('🤖 AI Client Debug - Caught error in chatCompletion:', error);
+      throw error;
     }
   }
 
@@ -157,7 +151,6 @@ export class AIClient {
       ],
       temperature: options.temperature ?? 0.7,
       max_tokens: options.max_tokens ?? 1024,
-      model: options.model ?? '@cf/meta/llama-3.1-8b-instruct',
     };
 
     const response = await this.chatCompletion(request);
@@ -232,15 +225,20 @@ export class AIClient {
     try {
       console.log('🤖 AI Client Debug - Simple chat request to:', url);
       
+      // Combine system prompt with user message if provided
+      let combinedMessage = message;
+      if (systemPrompt) {
+        combinedMessage = `${systemPrompt}\n\nUser input: ${message}`;
+      }
+      
       const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.apiKey}`,
+          'User-Agent': 'Anonymous-Comment-Box-AI-Client/1.0',
         },
         body: JSON.stringify({
-          message,
-          systemPrompt,
+          input: combinedMessage
         }),
         signal: AbortSignal.timeout(30000), // 30 second timeout
       });
@@ -251,7 +249,8 @@ export class AIClient {
         await this.handleApiError(response);
       }
 
-      const data = await response.json() as { response: string; error?: string };
+      const data = await response.json() as any;
+      console.log('🤖 AI Client Debug - Simple chat response data:', JSON.stringify(data, null, 2));
       
       if (data.error) {
         throw new AIClientError(
@@ -262,7 +261,30 @@ export class AIClient {
         );
       }
 
-      return data.response;
+      // Extract response text from the complex structure (same as chat endpoint)
+      let responseText = 'No response received';
+      
+      if (data.output && Array.isArray(data.output)) {
+        console.log('🤖 AI Client - Found output array with', data.output.length, 'items');
+        
+        // Look for the assistant message in the output array
+        const assistantMessage = data.output.find((item: any) => 
+          item.type === 'message' && item.role === 'assistant'
+        );
+        
+        if (assistantMessage && assistantMessage.content && Array.isArray(assistantMessage.content)) {
+          console.log('🤖 AI Client - Assistant content array has', assistantMessage.content.length, 'items');
+          
+          // Extract the main text response
+          const textContent = assistantMessage.content.find((content: any) => content.type === 'output_text');
+          if (textContent && textContent.text) {
+            responseText = textContent.text;
+            console.log('🤖 AI Client - Extracted response text:', responseText);
+          }
+        }
+      }
+      
+      return responseText;
     } catch (error) {
       if (error instanceof AIClientError) {
         throw error;

@@ -41,7 +41,7 @@ export interface SubmitResponse {
 export interface ErrorResponse {
   error: string;
   code?: string;
-  details?: any;
+  details?: Record<string, unknown>;
 }
 
 // Persona-related types

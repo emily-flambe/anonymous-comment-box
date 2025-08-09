@@ -4,7 +4,7 @@ import { processQueuedMessages } from '../lib/queue';
 export async function handleProcessQueue(
   request: Request,
   env: Env,
-  ctx: ExecutionContext
+  _ctx: ExecutionContext
 ): Promise<Response> {
   try {
     // This endpoint should only be called by Cloudflare's scheduled workers
