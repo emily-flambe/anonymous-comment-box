@@ -143,13 +143,13 @@ function validatePreviewRequest(body: any): { error: string; status: number } | 
   return null;
 }
 
-function formatEmailPreview(message: string, env: Env): string {
+function formatEmailPreview(message: string, _env: Env): string {
   // Return only the transformed message content for preview
   return message;
 }
 
-function createErrorResponse(message: string, status: number, additionalData?: any): Response {
-  const errorResponse: ErrorResponse & any = {
+function createErrorResponse(message: string, status: number, additionalData?: Record<string, unknown>): Response {
+  const errorResponse: ErrorResponse = {
     error: message,
     ...additionalData
   };

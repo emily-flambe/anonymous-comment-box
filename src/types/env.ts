@@ -17,4 +17,7 @@ export interface Env {
   RECIPIENT_EMAIL: string;
   ENVIRONMENT: 'development' | 'production' | 'test';
   QUEUE_DELAY_SECONDS?: string; // Optional for parameterized delays
+  
+  // Optional assets binding for static files
+  ASSETS?: any;
 }

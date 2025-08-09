@@ -16,7 +16,7 @@
       "@types/node",
       "vitest/globals"
     ],
-    "jsx": "react",
+    // "jsx": "react",  // Removed - project uses vanilla JavaScript, not React
     "allowJs": true,
     "baseUrl": ".",
     "paths": {

@@ -4,7 +4,7 @@ import { GmailAuth } from '../lib/gmail-auth';
 export async function handleDebugEmailStatus(
   request: Request,
   env: Env,
-  ctx: ExecutionContext
+  _ctx: ExecutionContext
 ): Promise<Response> {
   try {
     const gmailAuth = new GmailAuth(env);
@@ -49,7 +49,7 @@ export async function handleDebugEmailStatus(
 export async function handleDebugQueueStatus(
   request: Request,
   env: Env,
-  ctx: ExecutionContext
+  _ctx: ExecutionContext
 ): Promise<Response> {
   try {
     // List all queued messages (this is a simple approach - in production you'd want pagination)
@@ -95,7 +95,7 @@ export async function handleDebugQueueStatus(
 export async function handleDebugTokenStatus(
   request: Request,
   env: Env,
-  ctx: ExecutionContext
+  _ctx: ExecutionContext
 ): Promise<Response> {
   try {
     const gmailAuth = new GmailAuth(env);
@@ -141,7 +141,7 @@ export async function handleDebugTokenStatus(
 export async function handleDebugSendTestEmail(
   request: Request,
   env: Env,
-  ctx: ExecutionContext
+  _ctx: ExecutionContext
 ): Promise<Response> {
   try {
     const gmailAuth = new GmailAuth(env);
